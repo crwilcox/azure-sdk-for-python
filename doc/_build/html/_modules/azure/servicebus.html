@@ -1,0 +1,892 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.servicebus &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../../index.html" />
+    <link rel="up" title="azure" href="../azure.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../azure.html" accesskey="U">azure</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for azure.servicebus</h1><div class="highlight"><pre>
+<span class="c">#-------------------------------------------------------------------------</span>
+<span class="c"># Copyright (c) Microsoft.  All rights reserved.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#   http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+<span class="c">#--------------------------------------------------------------------------</span>
+<span class="kn">import</span> <span class="nn">ast</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">azure</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WindowsAzureData</span><span class="p">,</span>
+    <span class="n">WindowsAzureError</span><span class="p">,</span>
+    <span class="n">_general_error_handler</span><span class="p">,</span>
+    <span class="n">_lower</span><span class="p">,</span>
+    <span class="n">_str</span><span class="p">,</span>
+    <span class="n">_ERROR_MESSAGE_NOT_PEEK_LOCKED_ON_DELETE</span><span class="p">,</span>
+    <span class="n">_ERROR_MESSAGE_NOT_PEEK_LOCKED_ON_UNLOCK</span><span class="p">,</span>
+    <span class="n">_ERROR_EVENT_HUB_NOT_FOUND</span><span class="p">,</span>
+    <span class="n">_ERROR_QUEUE_NOT_FOUND</span><span class="p">,</span>
+    <span class="n">_ERROR_TOPIC_NOT_FOUND</span><span class="p">,</span>
+    <span class="n">_XmlWriter</span><span class="p">,</span>
+    <span class="n">_make_etree_ns_attr_name</span><span class="p">,</span>
+    <span class="n">_get_etree_text</span><span class="p">,</span>
+    <span class="n">ETree</span><span class="p">,</span>
+    <span class="n">_ETreeXmlToObject</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">azure.http</span> <span class="kn">import</span> <span class="n">HTTPError</span>
+
+<span class="c"># default rule name for subscription</span>
+<span class="n">DEFAULT_RULE_NAME</span> <span class="o">=</span> <span class="s">&#39;$Default&#39;</span>
+
+<span class="c">#-----------------------------------------------------------------------------</span>
+<span class="c"># Constants for Azure app environment settings.</span>
+<span class="n">AZURE_SERVICEBUS_NAMESPACE</span> <span class="o">=</span> <span class="s">&#39;AZURE_SERVICEBUS_NAMESPACE&#39;</span>
+<span class="n">AZURE_SERVICEBUS_ACCESS_KEY</span> <span class="o">=</span> <span class="s">&#39;AZURE_SERVICEBUS_ACCESS_KEY&#39;</span>
+<span class="n">AZURE_SERVICEBUS_ISSUER</span> <span class="o">=</span> <span class="s">&#39;AZURE_SERVICEBUS_ISSUER&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">_XmlSchemas</span><span class="p">:</span>
+    <span class="n">SchemaInstance</span> <span class="o">=</span> <span class="s">&#39;http://www.w3.org/2001/XMLSchema-instance&#39;</span>
+    <span class="n">SerializationArrays</span> <span class="o">=</span> <span class="s">&#39;http://schemas.microsoft.com/2003/10/Serialization/Arrays&#39;</span>
+    <span class="n">ServiceBus</span> <span class="o">=</span> <span class="s">&#39;http://schemas.microsoft.com/netservices/2010/10/servicebus/connect&#39;</span>
+    <span class="n">DataServices</span> <span class="o">=</span> <span class="s">&#39;http://schemas.microsoft.com/ado/2007/08/dataservices&#39;</span>
+    <span class="n">DataServicesMetadata</span> <span class="o">=</span> <span class="s">&#39;http://schemas.microsoft.com/ado/2007/08/dataservices/metadata&#39;</span>
+    <span class="n">Atom</span> <span class="o">=</span> <span class="s">&#39;http://www.w3.org/2005/Atom&#39;</span>
+
+
+<div class="viewcode-block" id="Queue"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.Queue">[docs]</a><span class="k">class</span> <span class="nc">Queue</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Queue class corresponding to Queue Description:</span>
+<span class="sd">    http://msdn.microsoft.com/en-us/library/windowsazure/hh780773&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lock_duration</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">max_size_in_megabytes</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">requires_duplicate_detection</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">requires_session</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">default_message_time_to_live</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">dead_lettering_on_message_expiration</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">duplicate_detection_history_time_window</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">max_delivery_count</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">enable_batched_operations</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">size_in_bytes</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">message_count</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock_duration</span> <span class="o">=</span> <span class="n">lock_duration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_size_in_megabytes</span> <span class="o">=</span> <span class="n">max_size_in_megabytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requires_duplicate_detection</span> <span class="o">=</span> <span class="n">requires_duplicate_detection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requires_session</span> <span class="o">=</span> <span class="n">requires_session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_message_time_to_live</span> <span class="o">=</span> <span class="n">default_message_time_to_live</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead_lettering_on_message_expiration</span> <span class="o">=</span> \
+            <span class="n">dead_lettering_on_message_expiration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_detection_history_time_window</span> <span class="o">=</span> \
+            <span class="n">duplicate_detection_history_time_window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_delivery_count</span> <span class="o">=</span> <span class="n">max_delivery_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enable_batched_operations</span> <span class="o">=</span> <span class="n">enable_batched_operations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size_in_bytes</span> <span class="o">=</span> <span class="n">size_in_bytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_count</span> <span class="o">=</span> <span class="n">message_count</span>
+
+</div>
+<div class="viewcode-block" id="Topic"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.Topic">[docs]</a><span class="k">class</span> <span class="nc">Topic</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Topic class corresponding to Topic Description:</span>
+<span class="sd">    http://msdn.microsoft.com/en-us/library/windowsazure/hh780749. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_message_time_to_live</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">max_size_in_megabytes</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">requires_duplicate_detection</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">duplicate_detection_history_time_window</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">enable_batched_operations</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">size_in_bytes</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_message_time_to_live</span> <span class="o">=</span> <span class="n">default_message_time_to_live</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_size_in_megabytes</span> <span class="o">=</span> <span class="n">max_size_in_megabytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requires_duplicate_detection</span> <span class="o">=</span> <span class="n">requires_duplicate_detection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_detection_history_time_window</span> <span class="o">=</span> \
+            <span class="n">duplicate_detection_history_time_window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enable_batched_operations</span> <span class="o">=</span> <span class="n">enable_batched_operations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size_in_bytes</span> <span class="o">=</span> <span class="n">size_in_bytes</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">max_size_in_mega_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">warnings</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s">&#39;This attribute has been changed to max_size_in_megabytes.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_size_in_megabytes</span>
+
+    <span class="nd">@max_size_in_mega_bytes.setter</span>
+<div class="viewcode-block" id="Topic.max_size_in_mega_bytes"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.Topic.max_size_in_mega_bytes">[docs]</a>    <span class="k">def</span> <span class="nf">max_size_in_mega_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_size_in_megabytes</span> <span class="o">=</span> <span class="n">value</span>
+
+</div></div>
+<div class="viewcode-block" id="Subscription"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.Subscription">[docs]</a><span class="k">class</span> <span class="nc">Subscription</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Subscription class corresponding to Subscription Description:</span>
+<span class="sd">    http://msdn.microsoft.com/en-us/library/windowsazure/hh780763. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lock_duration</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">requires_session</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">default_message_time_to_live</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">dead_lettering_on_message_expiration</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">dead_lettering_on_filter_evaluation_exceptions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">enable_batched_operations</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">max_delivery_count</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">message_count</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock_duration</span> <span class="o">=</span> <span class="n">lock_duration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requires_session</span> <span class="o">=</span> <span class="n">requires_session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_message_time_to_live</span> <span class="o">=</span> <span class="n">default_message_time_to_live</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead_lettering_on_message_expiration</span> <span class="o">=</span> \
+            <span class="n">dead_lettering_on_message_expiration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead_lettering_on_filter_evaluation_exceptions</span> <span class="o">=</span> \
+            <span class="n">dead_lettering_on_filter_evaluation_exceptions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enable_batched_operations</span> <span class="o">=</span> <span class="n">enable_batched_operations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_delivery_count</span> <span class="o">=</span> <span class="n">max_delivery_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_count</span> <span class="o">=</span> <span class="n">message_count</span>
+
+</div>
+<div class="viewcode-block" id="Rule"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.Rule">[docs]</a><span class="k">class</span> <span class="nc">Rule</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Rule class corresponding to Rule Description:</span>
+<span class="sd">    http://msdn.microsoft.com/en-us/library/windowsazure/hh780753. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filter_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filter_expression</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">action_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">action_expression</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter_type</span> <span class="o">=</span> <span class="n">filter_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter_expression</span> <span class="o">=</span> <span class="n">filter_expression</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action_type</span> <span class="o">=</span> <span class="n">action_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action_expression</span> <span class="o">=</span> <span class="n">action_type</span>
+
+</div>
+<div class="viewcode-block" id="EventHub"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.EventHub">[docs]</a><span class="k">class</span> <span class="nc">EventHub</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_retention_in_days</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">user_metadata</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">partition_count</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_retention_in_days</span> <span class="o">=</span> <span class="n">message_retention_in_days</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_metadata</span> <span class="o">=</span> <span class="n">user_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partition_count</span> <span class="o">=</span> <span class="n">partition_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">authorization_rules</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partition_ids</span> <span class="o">=</span> <span class="p">[]</span>
+
+</div>
+<div class="viewcode-block" id="AuthorizationRule"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.AuthorizationRule">[docs]</a><span class="k">class</span> <span class="nc">AuthorizationRule</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">claim_value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rights</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">key_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">secondary_key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">claim_type</span> <span class="o">=</span> <span class="n">claim_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">claim_value</span> <span class="o">=</span> <span class="n">claim_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rights</span> <span class="o">=</span> <span class="n">rights</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">created_time</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modified_time</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key_name</span> <span class="o">=</span> <span class="n">key_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span> <span class="o">=</span> <span class="n">primary_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secondary_key</span> <span class="o">=</span> <span class="n">secondary_key</span>
+
+</div>
+<div class="viewcode-block" id="Message"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.Message">[docs]</a><span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Message class that used in send message/get mesage apis. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">service_bus_service</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">custom_properties</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="nb">type</span><span class="o">=</span><span class="s">&#39;application/atom+xml;type=entry;charset=utf-8&#39;</span><span class="p">,</span>
+                 <span class="n">broker_properties</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">body</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">location</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span> <span class="o">=</span> <span class="n">broker_properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_properties</span> <span class="o">=</span> <span class="n">custom_properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">service_bus_service</span> <span class="o">=</span> <span class="n">service_bus_service</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_topic_name</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subscription_name</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue_name</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">service_bus_service</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># if location is set, then extracts the queue name for queue message and</span>
+        <span class="c"># extracts the topic and subscriptions name if it is topic message.</span>
+        <span class="k">if</span> <span class="n">location</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s">&#39;/subscriptions/&#39;</span> <span class="ow">in</span> <span class="n">location</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">service_bus_service</span><span class="o">.</span><span class="n">host_base</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">+</span><span class="mi">1</span>
+                <span class="n">pos1</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;/subscriptions/&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_topic_name</span> <span class="o">=</span> <span class="n">location</span><span class="p">[</span><span class="n">pos</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">service_bus_service</span><span class="o">.</span><span class="n">host_base</span><span class="p">):</span><span class="n">pos1</span><span class="p">]</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">pos1</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="s">&#39;/subscriptions/&#39;</span><span class="p">)</span>
+                <span class="n">pos1</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_subscription_name</span> <span class="o">=</span> <span class="n">location</span><span class="p">[</span><span class="n">pos</span><span class="p">:</span><span class="n">pos1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="s">&#39;/messages/&#39;</span> <span class="ow">in</span> <span class="n">location</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">service_bus_service</span><span class="o">.</span><span class="n">host_base</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">+</span><span class="mi">1</span>
+                <span class="n">pos1</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;/messages/&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_queue_name</span> <span class="o">=</span> <span class="n">location</span><span class="p">[</span><span class="n">pos</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">service_bus_service</span><span class="o">.</span><span class="n">host_base</span><span class="p">):</span><span class="n">pos1</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Message.delete"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.Message.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Deletes itself if find queue name or topic name and subscription</span>
+<span class="sd">        name. &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue_name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">service_bus_service</span><span class="o">.</span><span class="n">delete_queue_message</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_queue_name</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">[</span><span class="s">&#39;SequenceNumber&#39;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">[</span><span class="s">&#39;LockToken&#39;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topic_name</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subscription_name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">service_bus_service</span><span class="o">.</span><span class="n">delete_subscription_message</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_topic_name</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_subscription_name</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">[</span><span class="s">&#39;SequenceNumber&#39;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">[</span><span class="s">&#39;LockToken&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WindowsAzureError</span><span class="p">(</span><span class="n">_ERROR_MESSAGE_NOT_PEEK_LOCKED_ON_DELETE</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Message.unlock"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.Message.unlock">[docs]</a>    <span class="k">def</span> <span class="nf">unlock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Unlocks itself if find queue name or topic name and subscription</span>
+<span class="sd">        name. &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue_name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">service_bus_service</span><span class="o">.</span><span class="n">unlock_queue_message</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_queue_name</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">[</span><span class="s">&#39;SequenceNumber&#39;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">[</span><span class="s">&#39;LockToken&#39;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topic_name</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subscription_name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">service_bus_service</span><span class="o">.</span><span class="n">unlock_subscription_message</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_topic_name</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_subscription_name</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">[</span><span class="s">&#39;SequenceNumber&#39;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">[</span><span class="s">&#39;LockToken&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WindowsAzureError</span><span class="p">(</span><span class="n">_ERROR_MESSAGE_NOT_PEEK_LOCKED_ON_UNLOCK</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Message.add_headers"><a class="viewcode-back" href="../../api/azure.servicebus.html#azure.servicebus.Message.add_headers">[docs]</a>    <span class="k">def</span> <span class="nf">add_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; add addtional headers to request for message request.&#39;&#39;&#39;</span>
+
+        <span class="c"># Adds custom properties</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_properties</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_properties</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
+                    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="n">value</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&quot;&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&quot;&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+                    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="n">value</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%a, </span><span class="si">%d</span><span class="s"> %b %Y %H:%M:%S GMT&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&quot;&#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()))</span>
+
+        <span class="c"># Adds content-type</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">))</span>
+
+        <span class="c"># Adds BrokerProperties</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">:</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span><span class="s">&#39;BrokerProperties&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">broker_properties</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span>
+
+</div></div>
+<span class="k">def</span> <span class="nf">_create_message</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">service_instance</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Create message from response.</span>
+
+<span class="sd">    response: response from service bus cloud server.</span>
+<span class="sd">    service_instance: the service bus client.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">respbody</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">body</span>
+    <span class="n">custom_properties</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">broker_properties</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">message_type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">message_location</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="c"># gets all information from respheaders.</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;brokerproperties&#39;</span><span class="p">:</span>
+            <span class="n">broker_properties</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;content-type&#39;</span><span class="p">:</span>
+            <span class="n">message_type</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;location&#39;</span><span class="p">:</span>
+            <span class="n">message_location</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;content-type&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;brokerproperties&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;transfer-encoding&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;server&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;location&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;date&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="s">&#39;&quot;&#39;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">custom_properties</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span>
+                        <span class="n">value</span><span class="p">,</span> <span class="s">&#39;%a, </span><span class="si">%d</span><span class="s"> %b %Y %H:%M:%S GMT&#39;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">custom_properties</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c"># only int, float or boolean</span>
+                <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;true&#39;</span><span class="p">:</span>
+                    <span class="n">custom_properties</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">elif</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;false&#39;</span><span class="p">:</span>
+                    <span class="n">custom_properties</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="c"># int(&#39;3.1&#39;) doesn&#39;t work so need to get float(&#39;3.14&#39;) first</span>
+                <span class="k">elif</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="n">custom_properties</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">custom_properties</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">message_type</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="n">Message</span><span class="p">(</span>
+            <span class="n">respbody</span><span class="p">,</span> <span class="n">service_instance</span><span class="p">,</span> <span class="n">message_location</span><span class="p">,</span> <span class="n">custom_properties</span><span class="p">,</span>
+            <span class="s">&#39;application/atom+xml;type=entry;charset=utf-8&#39;</span><span class="p">,</span> <span class="n">broker_properties</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="n">Message</span><span class="p">(</span><span class="n">respbody</span><span class="p">,</span> <span class="n">service_instance</span><span class="p">,</span> <span class="n">message_location</span><span class="p">,</span>
+                          <span class="n">custom_properties</span><span class="p">,</span> <span class="n">message_type</span><span class="p">,</span> <span class="n">broker_properties</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">message</span>
+
+<span class="c"># convert functions</span>
+
+<span class="n">_etree_sb_feed_namespaces</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;atom&#39;</span><span class="p">:</span> <span class="n">_XmlSchemas</span><span class="o">.</span><span class="n">Atom</span><span class="p">,</span>
+    <span class="s">&#39;i&#39;</span><span class="p">:</span> <span class="n">_XmlSchemas</span><span class="o">.</span><span class="n">SchemaInstance</span><span class="p">,</span>
+    <span class="s">&#39;sb&#39;</span><span class="p">:</span> <span class="n">_XmlSchemas</span><span class="o">.</span><span class="n">ServiceBus</span><span class="p">,</span>
+    <span class="s">&#39;arrays&#39;</span><span class="p">:</span> <span class="n">_XmlSchemas</span><span class="o">.</span><span class="n">SerializationArrays</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_response_to_rule</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_convert_etree_element_to_rule</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_etree_element_to_rule</span><span class="p">(</span><span class="n">entry_element</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Converts entry element to rule object.</span>
+
+<span class="sd">    The format of xml for rule:</span>
+<span class="sd">&lt;entry xmlns=&#39;http://www.w3.org/2005/Atom&#39;&gt;</span>
+<span class="sd">&lt;content type=&#39;application/xml&#39;&gt;</span>
+<span class="sd">&lt;RuleDescription</span>
+<span class="sd">    xmlns:i=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+<span class="sd">    xmlns=&quot;http://schemas.microsoft.com/netservices/2010/10/servicebus/connect&quot;&gt;</span>
+<span class="sd">    &lt;Filter i:type=&quot;SqlFilterExpression&quot;&gt;</span>
+<span class="sd">        &lt;SqlExpression&gt;MyProperty=&#39;XYZ&#39;&lt;/SqlExpression&gt;</span>
+<span class="sd">    &lt;/Filter&gt;</span>
+<span class="sd">    &lt;Action i:type=&quot;SqlFilterAction&quot;&gt;</span>
+<span class="sd">        &lt;SqlExpression&gt;set MyProperty2 = &#39;ABC&#39;&lt;/SqlExpression&gt;</span>
+<span class="sd">    &lt;/Action&gt;</span>
+<span class="sd">&lt;/RuleDescription&gt;</span>
+<span class="sd">&lt;/content&gt;</span>
+<span class="sd">&lt;/entry&gt;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">rule</span> <span class="o">=</span> <span class="n">Rule</span><span class="p">()</span>
+
+    <span class="n">rule_element</span> <span class="o">=</span> <span class="n">entry_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./atom:content/sb:RuleDescription&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">rule_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">filter_element</span> <span class="o">=</span> <span class="n">rule_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./sb:Filter&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">filter_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">rule</span><span class="o">.</span><span class="n">filter_type</span> <span class="o">=</span> <span class="n">filter_element</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">_make_etree_ns_attr_name</span><span class="p">(</span><span class="n">_etree_sb_feed_namespaces</span><span class="p">[</span><span class="s">&#39;i&#39;</span><span class="p">],</span> <span class="s">&#39;type&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">sql_exp_element</span> <span class="o">=</span> <span class="n">filter_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./sb:SqlExpression&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sql_exp_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">rule</span><span class="o">.</span><span class="n">filter_expression</span> <span class="o">=</span> <span class="n">sql_exp_element</span><span class="o">.</span><span class="n">text</span>
+
+        <span class="n">action_element</span> <span class="o">=</span> <span class="n">rule_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./sb:Action&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">action_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">rule</span><span class="o">.</span><span class="n">action_type</span> <span class="o">=</span> <span class="n">action_element</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">_make_etree_ns_attr_name</span><span class="p">(</span><span class="n">_etree_sb_feed_namespaces</span><span class="p">[</span><span class="s">&#39;i&#39;</span><span class="p">],</span> <span class="s">&#39;type&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">sql_exp_element</span> <span class="o">=</span> <span class="n">action_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./sb:SqlExpression&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sql_exp_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">rule</span><span class="o">.</span><span class="n">action_expression</span> <span class="o">=</span> <span class="n">sql_exp_element</span><span class="o">.</span><span class="n">text</span>
+
+
+    <span class="c"># extract id, updated and name value from feed entry and set them of rule.</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">get_entry_properties_from_element</span><span class="p">(</span>
+        <span class="n">entry_element</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&#39;/rules&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rule</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_response_to_queue</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_convert_etree_element_to_queue</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_response_to_event_hub</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_convert_etree_element_to_event_hub</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_bool</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;true&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span>
+
+
+<span class="k">def</span> <span class="nf">_read_etree_element</span><span class="p">(</span><span class="n">parent_element</span><span class="p">,</span> <span class="n">child_element_name</span><span class="p">,</span> <span class="n">target_object</span><span class="p">,</span> <span class="n">target_field_name</span><span class="p">,</span> <span class="n">converter</span><span class="p">):</span>
+    <span class="n">child_element</span> <span class="o">=</span> <span class="n">parent_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./sb:{0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">child_element_name</span><span class="p">),</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">child_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">field_value</span> <span class="o">=</span> <span class="n">_get_etree_text</span><span class="p">(</span><span class="n">child_element</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">converter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">field_value</span> <span class="o">=</span> <span class="n">converter</span><span class="p">(</span><span class="n">field_value</span><span class="p">)</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">target_object</span><span class="p">,</span> <span class="n">target_field_name</span><span class="p">,</span> <span class="n">field_value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_etree_element_to_queue</span><span class="p">(</span><span class="n">entry_element</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Converts entry element to queue object.</span>
+
+<span class="sd">    The format of xml response for queue:</span>
+<span class="sd">&lt;QueueDescription</span>
+<span class="sd">    xmlns=\&quot;http://schemas.microsoft.com/netservices/2010/10/servicebus/connect\&quot;&gt;</span>
+<span class="sd">    &lt;MaxSizeInBytes&gt;10000&lt;/MaxSizeInBytes&gt;</span>
+<span class="sd">    &lt;DefaultMessageTimeToLive&gt;PT5M&lt;/DefaultMessageTimeToLive&gt;</span>
+<span class="sd">    &lt;LockDuration&gt;PT2M&lt;/LockDuration&gt;</span>
+<span class="sd">    &lt;RequiresGroupedReceives&gt;False&lt;/RequiresGroupedReceives&gt;</span>
+<span class="sd">    &lt;SupportsDuplicateDetection&gt;False&lt;/SupportsDuplicateDetection&gt;</span>
+<span class="sd">    ...</span>
+<span class="sd">&lt;/QueueDescription&gt;</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+
+    <span class="c"># get node for each attribute in Queue class, if nothing found then the</span>
+    <span class="c"># response is not valid xml for Queue.</span>
+    <span class="n">invalid_queue</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">queue_element</span> <span class="o">=</span> <span class="n">entry_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./atom:content/sb:QueueDescription&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">queue_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">mappings</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s">&#39;LockDuration&#39;</span><span class="p">,</span> <span class="s">&#39;lock_duration&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MaxSizeInMegabytes&#39;</span><span class="p">,</span> <span class="s">&#39;max_size_in_megabytes&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;RequiresDuplicateDetection&#39;</span><span class="p">,</span> <span class="s">&#39;requires_duplicate_detection&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;RequiresSession&#39;</span><span class="p">,</span> <span class="s">&#39;requires_session&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DefaultMessageTimeToLive&#39;</span><span class="p">,</span> <span class="s">&#39;default_message_time_to_live&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DeadLetteringOnMessageExpiration&#39;</span><span class="p">,</span> <span class="s">&#39;dead_lettering_on_message_expiration&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DuplicateDetectionHistoryTimeWindow&#39;</span><span class="p">,</span> <span class="s">&#39;duplicate_detection_history_time_window&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;EnableBatchedOperations&#39;</span><span class="p">,</span> <span class="s">&#39;enable_batched_operations&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MaxDeliveryCount&#39;</span><span class="p">,</span> <span class="s">&#39;max_delivery_count&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MessageCount&#39;</span><span class="p">,</span> <span class="s">&#39;message_count&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;SizeInBytes&#39;</span><span class="p">,</span> <span class="s">&#39;size_in_bytes&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="nb">map</span> <span class="ow">in</span> <span class="n">mappings</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_read_etree_element</span><span class="p">(</span><span class="n">queue_element</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">queue</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">map</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+                <span class="n">invalid_queue</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">if</span> <span class="n">invalid_queue</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">WindowsAzureError</span><span class="p">(</span><span class="n">_ERROR_QUEUE_NOT_FOUND</span><span class="p">)</span>
+
+    <span class="c"># extract id, updated and name value from feed entry and set them of queue.</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">get_entry_properties_from_element</span><span class="p">(</span>
+        <span class="n">entry_element</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">queue</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_response_to_topic</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_convert_etree_element_to_topic</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_etree_element_to_topic</span><span class="p">(</span><span class="n">entry_element</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Converts entry element to topic</span>
+
+<span class="sd">    The xml format for topic:</span>
+<span class="sd">&lt;entry xmlns=&#39;http://www.w3.org/2005/Atom&#39;&gt;</span>
+<span class="sd">    &lt;content type=&#39;application/xml&#39;&gt;</span>
+<span class="sd">    &lt;TopicDescription</span>
+<span class="sd">        xmlns:i=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+<span class="sd">        xmlns=&quot;http://schemas.microsoft.com/netservices/2010/10/servicebus/connect&quot;&gt;</span>
+<span class="sd">        &lt;DefaultMessageTimeToLive&gt;P10675199DT2H48M5.4775807S&lt;/DefaultMessageTimeToLive&gt;</span>
+<span class="sd">        &lt;MaxSizeInMegabytes&gt;1024&lt;/MaxSizeInMegabytes&gt;</span>
+<span class="sd">        &lt;RequiresDuplicateDetection&gt;false&lt;/RequiresDuplicateDetection&gt;</span>
+<span class="sd">        &lt;DuplicateDetectionHistoryTimeWindow&gt;P7D&lt;/DuplicateDetectionHistoryTimeWindow&gt;</span>
+<span class="sd">        &lt;DeadLetteringOnFilterEvaluationExceptions&gt;true&lt;/DeadLetteringOnFilterEvaluationExceptions&gt;</span>
+<span class="sd">    &lt;/TopicDescription&gt;</span>
+<span class="sd">    &lt;/content&gt;</span>
+<span class="sd">&lt;/entry&gt;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">topic</span> <span class="o">=</span> <span class="n">Topic</span><span class="p">()</span>
+
+    <span class="n">invalid_topic</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">topic_element</span> <span class="o">=</span> <span class="n">entry_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./atom:content/sb:TopicDescription&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">topic_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">mappings</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s">&#39;DefaultMessageTimeToLive&#39;</span><span class="p">,</span> <span class="s">&#39;default_message_time_to_live&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MaxSizeInMegabytes&#39;</span><span class="p">,</span> <span class="s">&#39;max_size_in_megabytes&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;RequiresDuplicateDetection&#39;</span><span class="p">,</span> <span class="s">&#39;requires_duplicate_detection&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DuplicateDetectionHistoryTimeWindow&#39;</span><span class="p">,</span> <span class="s">&#39;duplicate_detection_history_time_window&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;EnableBatchedOperations&#39;</span><span class="p">,</span> <span class="s">&#39;enable_batched_operations&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;SizeInBytes&#39;</span><span class="p">,</span> <span class="s">&#39;size_in_bytes&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="nb">map</span> <span class="ow">in</span> <span class="n">mappings</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_read_etree_element</span><span class="p">(</span><span class="n">topic_element</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">topic</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">map</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+                <span class="n">invalid_topic</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">if</span> <span class="n">invalid_topic</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">WindowsAzureError</span><span class="p">(</span><span class="n">_ERROR_TOPIC_NOT_FOUND</span><span class="p">)</span>
+
+    <span class="c"># extract id, updated and name value from feed entry and set them of topic.</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">get_entry_properties_from_element</span><span class="p">(</span>
+        <span class="n">entry_element</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">topic</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">topic</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_response_to_subscription</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_convert_etree_element_to_subscription</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_etree_element_to_subscription</span><span class="p">(</span><span class="n">entry_element</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Converts entry element to subscription</span>
+
+<span class="sd">    The xml format for subscription:</span>
+<span class="sd">&lt;entry xmlns=&#39;http://www.w3.org/2005/Atom&#39;&gt;</span>
+<span class="sd">    &lt;content type=&#39;application/xml&#39;&gt;</span>
+<span class="sd">    &lt;SubscriptionDescription</span>
+<span class="sd">        xmlns:i=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+<span class="sd">        xmlns=&quot;http://schemas.microsoft.com/netservices/2010/10/servicebus/connect&quot;&gt;</span>
+<span class="sd">        &lt;LockDuration&gt;PT5M&lt;/LockDuration&gt;</span>
+<span class="sd">        &lt;RequiresSession&gt;false&lt;/RequiresSession&gt;</span>
+<span class="sd">        &lt;DefaultMessageTimeToLive&gt;P10675199DT2H48M5.4775807S&lt;/DefaultMessageTimeToLive&gt;</span>
+<span class="sd">        &lt;DeadLetteringOnMessageExpiration&gt;false&lt;/DeadLetteringOnMessageExpiration&gt;</span>
+<span class="sd">        &lt;DeadLetteringOnFilterEvaluationExceptions&gt;true&lt;/DeadLetteringOnFilterEvaluationExceptions&gt;</span>
+<span class="sd">    &lt;/SubscriptionDescription&gt;</span>
+<span class="sd">    &lt;/content&gt;</span>
+<span class="sd">&lt;/entry&gt;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">subscription</span> <span class="o">=</span> <span class="n">Subscription</span><span class="p">()</span>
+
+    <span class="n">subscription_element</span> <span class="o">=</span> <span class="n">entry_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./atom:content/sb:SubscriptionDescription&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">subscription_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">mappings</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s">&#39;LockDuration&#39;</span><span class="p">,</span> <span class="s">&#39;lock_duration&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;RequiresSession&#39;</span><span class="p">,</span> <span class="s">&#39;requires_session&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DefaultMessageTimeToLive&#39;</span><span class="p">,</span> <span class="s">&#39;default_message_time_to_live&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DeadLetteringOnFilterEvaluationExceptions&#39;</span><span class="p">,</span> <span class="s">&#39;dead_lettering_on_filter_evaluation_exceptions&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DeadLetteringOnMessageExpiration&#39;</span><span class="p">,</span> <span class="s">&#39;dead_lettering_on_message_expiration&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;EnableBatchedOperations&#39;</span><span class="p">,</span> <span class="s">&#39;enable_batched_operations&#39;</span><span class="p">,</span> <span class="n">_parse_bool</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MaxDeliveryCount&#39;</span><span class="p">,</span> <span class="s">&#39;max_delivery_count&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MessageCount&#39;</span><span class="p">,</span> <span class="s">&#39;message_count&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="nb">map</span> <span class="ow">in</span> <span class="n">mappings</span><span class="p">:</span>
+            <span class="n">_read_etree_element</span><span class="p">(</span><span class="n">subscription_element</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">subscription</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">map</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">get_entry_properties_from_element</span><span class="p">(</span>
+        <span class="n">entry_element</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&#39;/subscriptions&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">subscription</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">subscription</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_etree_element_to_event_hub</span><span class="p">(</span><span class="n">entry_element</span><span class="p">):</span>
+    <span class="n">hub</span> <span class="o">=</span> <span class="n">EventHub</span><span class="p">()</span>
+
+    <span class="n">invalid_event_hub</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="c"># get node for each attribute in EventHub class, if nothing found then the</span>
+    <span class="c"># response is not valid xml for EventHub.</span>
+
+    <span class="n">hub_element</span> <span class="o">=</span> <span class="n">entry_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./atom:content/sb:EventHubDescription&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">hub_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">mappings</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s">&#39;SizeInBytes&#39;</span><span class="p">,</span> <span class="s">&#39;size_in_bytes&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MessageRetentionInDays&#39;</span><span class="p">,</span> <span class="s">&#39;message_retention_in_days&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;Status&#39;</span><span class="p">,</span> <span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;UserMetadata&#39;</span><span class="p">,</span> <span class="s">&#39;user_metadata&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;PartitionCount&#39;</span><span class="p">,</span> <span class="s">&#39;partition_count&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;EntityAvailableStatus&#39;</span><span class="p">,</span> <span class="s">&#39;entity_available_status&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="nb">map</span> <span class="ow">in</span> <span class="n">mappings</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_read_etree_element</span><span class="p">(</span><span class="n">hub_element</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">hub</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">map</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+                <span class="n">invalid_event_hub</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">hub_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./sb:PartitionIds&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">id_node</span> <span class="ow">in</span> <span class="n">ids</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;./arrays:string&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">_get_etree_text</span><span class="p">(</span><span class="n">id_node</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="n">hub</span><span class="o">.</span><span class="n">partition_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="n">rules_nodes</span> <span class="o">=</span> <span class="n">hub_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./sb:AuthorizationRules&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rules_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">invalid_event_hub</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">for</span> <span class="n">rule_node</span> <span class="ow">in</span> <span class="n">rules_nodes</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;./sb:AuthorizationRule&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">):</span>
+                <span class="n">rule</span> <span class="o">=</span> <span class="n">AuthorizationRule</span><span class="p">()</span>
+
+                <span class="n">mappings</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="s">&#39;ClaimType&#39;</span><span class="p">,</span> <span class="s">&#39;claim_type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&#39;ClaimValue&#39;</span><span class="p">,</span> <span class="s">&#39;claim_value&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&#39;ModifiedTime&#39;</span><span class="p">,</span> <span class="s">&#39;modified_time&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&#39;CreatedTime&#39;</span><span class="p">,</span> <span class="s">&#39;created_time&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&#39;KeyName&#39;</span><span class="p">,</span> <span class="s">&#39;key_name&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&#39;PrimaryKey&#39;</span><span class="p">,</span> <span class="s">&#39;primary_key&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s">&#39;SecondaryKey&#39;</span><span class="p">,</span> <span class="s">&#39;secondary_key&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                <span class="p">]</span>
+
+                <span class="k">for</span> <span class="nb">map</span> <span class="ow">in</span> <span class="n">mappings</span><span class="p">:</span>
+                    <span class="n">_read_etree_element</span><span class="p">(</span><span class="n">rule_node</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rule</span><span class="p">,</span> <span class="nb">map</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">map</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+                <span class="n">rights_nodes</span> <span class="o">=</span> <span class="n">rule_node</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./sb:Rights&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">rights_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">access_rights_node</span> <span class="ow">in</span> <span class="n">rights_nodes</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;./sb:AccessRights&#39;</span><span class="p">,</span> <span class="n">_etree_sb_feed_namespaces</span><span class="p">):</span>
+                        <span class="n">node_value</span> <span class="o">=</span> <span class="n">_get_etree_text</span><span class="p">(</span><span class="n">access_rights_node</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">node_value</span><span class="p">:</span>
+                            <span class="n">rule</span><span class="o">.</span><span class="n">rights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node_value</span><span class="p">)</span>
+
+                <span class="n">hub</span><span class="o">.</span><span class="n">authorization_rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">invalid_event_hub</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">WindowsAzureError</span><span class="p">(</span><span class="n">_ERROR_EVENT_HUB_NOT_FOUND</span><span class="p">)</span>
+
+    <span class="c"># extract id, updated and name value from feed entry and set them of queue.</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">get_entry_properties_from_element</span><span class="p">(</span>
+        <span class="n">entry_element</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;name&#39;</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">hub</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">hub</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_object_to_feed_entry</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">rootName</span><span class="p">,</span> <span class="n">content_writer</span><span class="p">):</span>
+    <span class="n">updated_str</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">utcoffset</span><span class="p">()</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">updated_str</span> <span class="o">+=</span> <span class="s">&#39;+00:00&#39;</span>
+
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">_XmlWriter</span><span class="p">()</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">preprocessor</span><span class="p">(</span><span class="s">&#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;&#39;</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&#39;entry&#39;</span><span class="p">,</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s">&#39;xmlns:d&#39;</span><span class="p">,</span> <span class="n">_XmlSchemas</span><span class="o">.</span><span class="n">DataServices</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">&#39;xmlns:m&#39;</span><span class="p">,</span> <span class="n">_XmlSchemas</span><span class="o">.</span><span class="n">DataServicesMetadata</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">&#39;xmlns&#39;</span><span class="p">,</span> <span class="n">_XmlSchemas</span><span class="o">.</span><span class="n">Atom</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="p">])</span>
+
+    <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;updated&#39;</span><span class="p">,</span> <span class="n">updated_str</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&#39;author&#39;</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="s">&#39;author&#39;</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&#39;content&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;application/xml&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">rootName</span><span class="p">,</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s">&#39;xmlns:i&#39;</span><span class="p">,</span> <span class="n">_XmlSchemas</span><span class="o">.</span><span class="n">SchemaInstance</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">&#39;xmlns&#39;</span><span class="p">,</span> <span class="n">_XmlSchemas</span><span class="o">.</span><span class="n">ServiceBus</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">obj</span><span class="p">:</span>
+        <span class="n">content_writer</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+
+    <span class="n">writer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="n">rootName</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="s">&#39;content&#39;</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="s">&#39;entry&#39;</span><span class="p">)</span>
+
+    <span class="n">xml</span> <span class="o">=</span> <span class="n">writer</span><span class="o">.</span><span class="n">xml</span><span class="p">()</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">xml</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_subscription_to_xml</span><span class="p">(</span><span class="n">sub</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_subscription_to_xml</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">sub</span><span class="p">):</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">elements</span><span class="p">([</span>
+            <span class="p">(</span><span class="s">&#39;LockDuration&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">lock_duration</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;RequiresSession&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">requires_session</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DefaultMessageTimeToLive&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">default_message_time_to_live</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DeadLetteringOnMessageExpiration&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">dead_lettering_on_message_expiration</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DeadLetteringOnFilterEvaluationExceptions&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">dead_lettering_on_filter_evaluation_exceptions</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;EnableBatchedOperations&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">enable_batched_operations</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MaxDeliveryCount&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">max_delivery_count</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MessageCount&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">message_count</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">_convert_object_to_feed_entry</span><span class="p">(</span>
+        <span class="n">sub</span><span class="p">,</span> <span class="s">&#39;SubscriptionDescription&#39;</span><span class="p">,</span> <span class="n">_subscription_to_xml</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_rule_to_xml</span><span class="p">(</span><span class="n">rule</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_rule_to_xml</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">rule</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">rule</span><span class="o">.</span><span class="n">filter_type</span><span class="p">:</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&#39;Filter&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;i:type&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">filter_type</span><span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+            <span class="k">if</span> <span class="n">rule</span><span class="o">.</span><span class="n">filter_type</span> <span class="o">==</span> <span class="s">&#39;CorrelationFilter&#39;</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;CorrelationId&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">filter_expression</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;SqlExpression&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">filter_expression</span><span class="p">)</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;CompatibilityLevel&#39;</span><span class="p">,</span> <span class="s">&#39;20&#39;</span><span class="p">)</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="s">&#39;Filter&#39;</span><span class="p">)</span>
+            <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">rule</span><span class="o">.</span><span class="n">action_type</span><span class="p">:</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&#39;Action&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;i:type&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">action_type</span><span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+            <span class="k">if</span> <span class="n">rule</span><span class="o">.</span><span class="n">action_type</span> <span class="o">==</span> <span class="s">&#39;SqlRuleAction&#39;</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;SqlExpression&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">action_expression</span><span class="p">)</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;CompatibilityLevel&#39;</span><span class="p">,</span> <span class="s">&#39;20&#39;</span><span class="p">)</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="s">&#39;Action&#39;</span><span class="p">)</span>
+            <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">_convert_object_to_feed_entry</span><span class="p">(</span>
+        <span class="n">rule</span><span class="p">,</span> <span class="s">&#39;RuleDescription&#39;</span><span class="p">,</span> <span class="n">_rule_to_xml</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_topic_to_xml</span><span class="p">(</span><span class="n">topic</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_topic_to_xml</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">topic</span><span class="p">):</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">elements</span><span class="p">([</span>
+            <span class="p">(</span><span class="s">&#39;DefaultMessageTimeToLive&#39;</span><span class="p">,</span> <span class="n">topic</span><span class="o">.</span><span class="n">default_message_time_to_live</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MaxSizeInMegabytes&#39;</span><span class="p">,</span> <span class="n">topic</span><span class="o">.</span><span class="n">max_size_in_megabytes</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;RequiresDuplicateDetection&#39;</span><span class="p">,</span> <span class="n">topic</span><span class="o">.</span><span class="n">requires_duplicate_detection</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DuplicateDetectionHistoryTimeWindow&#39;</span><span class="p">,</span> <span class="n">topic</span><span class="o">.</span><span class="n">duplicate_detection_history_time_window</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;EnableBatchedOperations&#39;</span><span class="p">,</span> <span class="n">topic</span><span class="o">.</span><span class="n">enable_batched_operations</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;SizeInBytes&#39;</span><span class="p">,</span> <span class="n">topic</span><span class="o">.</span><span class="n">size_in_bytes</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">_convert_object_to_feed_entry</span><span class="p">(</span>
+        <span class="n">topic</span><span class="p">,</span> <span class="s">&#39;TopicDescription&#39;</span><span class="p">,</span> <span class="n">_topic_to_xml</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_queue_to_xml</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_queue_to_xml</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">queue</span><span class="p">):</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">elements</span><span class="p">([</span>
+            <span class="p">(</span><span class="s">&#39;LockDuration&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">lock_duration</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MaxSizeInMegabytes&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">max_size_in_megabytes</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;RequiresDuplicateDetection&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">requires_duplicate_detection</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;RequiresSession&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">requires_session</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DefaultMessageTimeToLive&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">default_message_time_to_live</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DeadLetteringOnMessageExpiration&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">dead_lettering_on_message_expiration</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;DuplicateDetectionHistoryTimeWindow&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">duplicate_detection_history_time_window</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MaxDeliveryCount&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">max_delivery_count</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;EnableBatchedOperations&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">enable_batched_operations</span><span class="p">,</span> <span class="n">_lower</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;SizeInBytes&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">size_in_bytes</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;MessageCount&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="o">.</span><span class="n">message_count</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+            <span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">_convert_object_to_feed_entry</span><span class="p">(</span>
+        <span class="n">queue</span><span class="p">,</span> <span class="s">&#39;QueueDescription&#39;</span><span class="p">,</span> <span class="n">_queue_to_xml</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_event_hub_to_xml</span><span class="p">(</span><span class="n">hub</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_hub_to_xml</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">hub</span><span class="p">):</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">elements</span><span class="p">(</span>
+            <span class="p">[(</span><span class="s">&#39;MessageRetentionInDays&#39;</span><span class="p">,</span> <span class="n">hub</span><span class="o">.</span><span class="n">message_retention_in_days</span><span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">hub</span><span class="o">.</span><span class="n">authorization_rules</span><span class="p">:</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&#39;AuthorizationRules&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">hub</span><span class="o">.</span><span class="n">authorization_rules</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&#39;AuthorizationRule&#39;</span><span class="p">,</span>
+                             <span class="p">[(</span><span class="s">&#39;i:type&#39;</span><span class="p">,</span> <span class="s">&#39;SharedAccessAuthorizationRule&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">elements</span><span class="p">(</span>
+                    <span class="p">[(</span><span class="s">&#39;ClaimType&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">claim_type</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;ClaimValue&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">claim_value</span><span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+                <span class="k">if</span> <span class="n">rule</span><span class="o">.</span><span class="n">rights</span><span class="p">:</span>
+                    <span class="n">writer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&#39;Rights&#39;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">right</span> <span class="ow">in</span> <span class="n">rule</span><span class="o">.</span><span class="n">rights</span><span class="p">:</span>
+                        <span class="n">writer</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s">&#39;AccessRights&#39;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
+                    <span class="n">writer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="s">&#39;Rights&#39;</span><span class="p">)</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">elements</span><span class="p">(</span>
+                    <span class="p">[(</span><span class="s">&#39;KeyName&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">key_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;PrimaryKey&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">primary_key</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;SecondaryKey&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">secondary_key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="s">&#39;AuthorizationRule&#39;</span><span class="p">)</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="s">&#39;AuthorizationRules&#39;</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">elements</span><span class="p">(</span>
+            <span class="p">[(</span><span class="s">&#39;Status&#39;</span><span class="p">,</span> <span class="n">hub</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+             <span class="p">(</span><span class="s">&#39;UserMetadata&#39;</span><span class="p">,</span> <span class="n">hub</span><span class="o">.</span><span class="n">user_metadata</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+             <span class="p">(</span><span class="s">&#39;PartitionCount&#39;</span><span class="p">,</span> <span class="n">hub</span><span class="o">.</span><span class="n">partition_count</span><span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+
+    <span class="k">return</span> <span class="n">_convert_object_to_feed_entry</span><span class="p">(</span>
+        <span class="n">hub</span><span class="p">,</span> <span class="s">&#39;EventHubDescription&#39;</span><span class="p">,</span> <span class="n">_hub_to_xml</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_service_bus_error_handler</span><span class="p">(</span><span class="n">http_error</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Simple error handler for service bus service. &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">_general_error_handler</span><span class="p">(</span><span class="n">http_error</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">azure.servicebus.servicebusservice</span> <span class="kn">import</span> <span class="n">ServiceBusService</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../azure.html" >azure</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

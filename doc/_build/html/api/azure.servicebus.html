@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.servicebus package &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../index.html" />
+    <link rel="up" title="azure package" href="azure.html" />
+    <link rel="next" title="azure.servicebus.servicebusservice module" href="azure.servicebus.servicebusservice.html" />
+    <link rel="prev" title="azure.http.winhttp module" href="azure.http.winhttp.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.servicebus.servicebusservice.html" title="azure.servicebus.servicebusservice module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="azure.http.winhttp.html" title="azure.http.winhttp module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" accesskey="U">azure package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="azure-servicebus-package">
+<h1>azure.servicebus package<a class="headerlink" href="#azure-servicebus-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="azure.servicebus.servicebusservice.html">azure.servicebus.servicebusservice module</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="module-azure.servicebus">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-azure.servicebus" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="azure.servicebus.AuthorizationRule">
+<em class="property">class </em><tt class="descclassname">azure.servicebus.</tt><tt class="descname">AuthorizationRule</tt><big>(</big><em>claim_type=None</em>, <em>claim_value=None</em>, <em>rights=None</em>, <em>key_name=None</em>, <em>primary_key=None</em>, <em>secondary_key=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#AuthorizationRule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.AuthorizationRule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="azure.html#azure.WindowsAzureData" title="azure.WindowsAzureData"><tt class="xref py py-class docutils literal"><span class="pre">azure.WindowsAzureData</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.servicebus.EventHub">
+<em class="property">class </em><tt class="descclassname">azure.servicebus.</tt><tt class="descname">EventHub</tt><big>(</big><em>message_retention_in_days=None</em>, <em>status=None</em>, <em>user_metadata=None</em>, <em>partition_count=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#EventHub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.EventHub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="azure.html#azure.WindowsAzureData" title="azure.WindowsAzureData"><tt class="xref py py-class docutils literal"><span class="pre">azure.WindowsAzureData</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.servicebus.Message">
+<em class="property">class </em><tt class="descclassname">azure.servicebus.</tt><tt class="descname">Message</tt><big>(</big><em>body=None</em>, <em>service_bus_service=None</em>, <em>location=None</em>, <em>custom_properties=None</em>, <em>type='application/atom+xml;type=entry;charset=utf-8'</em>, <em>broker_properties=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#Message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.Message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="azure.html#azure.WindowsAzureData" title="azure.WindowsAzureData"><tt class="xref py py-class docutils literal"><span class="pre">azure.WindowsAzureData</span></tt></a></p>
+<p>Message class that used in send message/get mesage apis.</p>
+<dl class="method">
+<dt id="azure.servicebus.Message.add_headers">
+<tt class="descname">add_headers</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#Message.add_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.Message.add_headers" title="Permalink to this definition">¶</a></dt>
+<dd><p>add addtional headers to request for message request.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicebus.Message.delete">
+<tt class="descname">delete</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#Message.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.Message.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes itself if find queue name or topic name and subscription
+name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicebus.Message.unlock">
+<tt class="descname">unlock</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#Message.unlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.Message.unlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unlocks itself if find queue name or topic name and subscription
+name.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.servicebus.Queue">
+<em class="property">class </em><tt class="descclassname">azure.servicebus.</tt><tt class="descname">Queue</tt><big>(</big><em>lock_duration=None</em>, <em>max_size_in_megabytes=None</em>, <em>requires_duplicate_detection=None</em>, <em>requires_session=None</em>, <em>default_message_time_to_live=None</em>, <em>dead_lettering_on_message_expiration=None</em>, <em>duplicate_detection_history_time_window=None</em>, <em>max_delivery_count=None</em>, <em>enable_batched_operations=None</em>, <em>size_in_bytes=None</em>, <em>message_count=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#Queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.Queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="azure.html#azure.WindowsAzureData" title="azure.WindowsAzureData"><tt class="xref py py-class docutils literal"><span class="pre">azure.WindowsAzureData</span></tt></a></p>
+<p>Queue class corresponding to Queue Description:
+<a class="reference external" href="http://msdn.microsoft.com/en-us/library/windowsazure/hh780773">http://msdn.microsoft.com/en-us/library/windowsazure/hh780773</a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.servicebus.Rule">
+<em class="property">class </em><tt class="descclassname">azure.servicebus.</tt><tt class="descname">Rule</tt><big>(</big><em>filter_type=None</em>, <em>filter_expression=None</em>, <em>action_type=None</em>, <em>action_expression=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#Rule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.Rule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="azure.html#azure.WindowsAzureData" title="azure.WindowsAzureData"><tt class="xref py py-class docutils literal"><span class="pre">azure.WindowsAzureData</span></tt></a></p>
+<p>Rule class corresponding to Rule Description:
+<a class="reference external" href="http://msdn.microsoft.com/en-us/library/windowsazure/hh780753">http://msdn.microsoft.com/en-us/library/windowsazure/hh780753</a>.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.servicebus.Subscription">
+<em class="property">class </em><tt class="descclassname">azure.servicebus.</tt><tt class="descname">Subscription</tt><big>(</big><em>lock_duration=None</em>, <em>requires_session=None</em>, <em>default_message_time_to_live=None</em>, <em>dead_lettering_on_message_expiration=None</em>, <em>dead_lettering_on_filter_evaluation_exceptions=None</em>, <em>enable_batched_operations=None</em>, <em>max_delivery_count=None</em>, <em>message_count=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#Subscription"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.Subscription" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="azure.html#azure.WindowsAzureData" title="azure.WindowsAzureData"><tt class="xref py py-class docutils literal"><span class="pre">azure.WindowsAzureData</span></tt></a></p>
+<p>Subscription class corresponding to Subscription Description:
+<a class="reference external" href="http://msdn.microsoft.com/en-us/library/windowsazure/hh780763">http://msdn.microsoft.com/en-us/library/windowsazure/hh780763</a>.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.servicebus.Topic">
+<em class="property">class </em><tt class="descclassname">azure.servicebus.</tt><tt class="descname">Topic</tt><big>(</big><em>default_message_time_to_live=None</em>, <em>max_size_in_megabytes=None</em>, <em>requires_duplicate_detection=None</em>, <em>duplicate_detection_history_time_window=None</em>, <em>enable_batched_operations=None</em>, <em>size_in_bytes=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicebus.html#Topic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.Topic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="azure.html#azure.WindowsAzureData" title="azure.WindowsAzureData"><tt class="xref py py-class docutils literal"><span class="pre">azure.WindowsAzureData</span></tt></a></p>
+<p>Topic class corresponding to Topic Description:
+<a class="reference external" href="http://msdn.microsoft.com/en-us/library/windowsazure/hh780749">http://msdn.microsoft.com/en-us/library/windowsazure/hh780749</a>.</p>
+<dl class="attribute">
+<dt id="azure.servicebus.Topic.max_size_in_mega_bytes">
+<tt class="descname">max_size_in_mega_bytes</tt><a class="reference internal" href="../_modules/azure/servicebus.html#Topic.max_size_in_mega_bytes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicebus.Topic.max_size_in_mega_bytes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">azure.servicebus package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-azure.servicebus">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="azure.http.winhttp.html"
+                        title="previous chapter">azure.http.winhttp module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="azure.servicebus.servicebusservice.html"
+                        title="next chapter">azure.servicebus.servicebusservice module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/azure.servicebus.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.servicebus.servicebusservice.html" title="azure.servicebus.servicebusservice module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="azure.http.winhttp.html" title="azure.http.winhttp module"
+             >previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

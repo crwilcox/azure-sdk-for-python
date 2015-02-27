@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.servicemanagement.schedulermanagementservice module &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../index.html" />
+    <link rel="up" title="azure.servicemanagement package" href="azure.servicemanagement.html" />
+    <link rel="next" title="azure.servicemanagement.servicebusmanagementservice module" href="azure.servicemanagement.servicebusmanagementservice.html" />
+    <link rel="prev" title="azure.servicemanagement package" href="azure.servicemanagement.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.servicebusmanagementservice.html" title="azure.servicemanagement.servicebusmanagementservice module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.html" title="azure.servicemanagement package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li>
+          <li><a href="azure.servicemanagement.html" accesskey="U">azure.servicemanagement package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-azure.servicemanagement.schedulermanagementservice">
+<span id="azure-servicemanagement-schedulermanagementservice-module"></span><h1>azure.servicemanagement.schedulermanagementservice module<a class="headerlink" href="#module-azure.servicemanagement.schedulermanagementservice" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="azure.servicemanagement.schedulermanagementservice.SchedulerManagementService">
+<em class="property">class </em><tt class="descclassname">azure.servicemanagement.schedulermanagementservice.</tt><tt class="descname">SchedulerManagementService</tt><big>(</big><em>subscription_id=None</em>, <em>cert_file=None</em>, <em>host='management.core.windows.net'</em>, <em>request_session=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/schedulermanagementservice.html#SchedulerManagementService"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.schedulermanagementservice.SchedulerManagementService" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">azure.servicemanagement.servicemanagementclient._ServiceManagementClient</span></tt></p>
+<p>Note that this class is a preliminary work on Scheduler
+management. Since it lack a lot a features, final version
+can be slightly different from the current one.</p>
+<p>Initializes the scheduler management service.</p>
+<p>subscription_id: Subscription to manage.
+cert_file:</p>
+<blockquote>
+<div>Path to .pem certificate file (httplib), or location of the
+certificate in your Personal certificate store (winhttp) in the
+CURRENT_USERmyCertificateName format.
+If a request_session is specified, then this is unused.</div></blockquote>
+<p>host: Live ServiceClient URL. Defaults to Azure public cloud.
+request_session:</p>
+<blockquote>
+<div>Session object to use for http requests. If this is specified, it
+replaces the default use of httplib or winhttp. Also, the cert_file
+parameter is unused when a session is passed in.
+The session object handles authentication, and as such can support
+multiple types of authentication: .pem certificate, oauth.
+For example, you can pass in a Session instance from the requests
+library. To use .pem certificate authentication with requests
+library, set the path to the .pem file on the session.cert
+attribute.</div></blockquote>
+<dl class="method">
+<dt id="azure.servicemanagement.schedulermanagementservice.SchedulerManagementService.list_cloud_services">
+<tt class="descname">list_cloud_services</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/schedulermanagementservice.html#SchedulerManagementService.list_cloud_services"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.schedulermanagementservice.SchedulerManagementService.list_cloud_services" title="Permalink to this definition">¶</a></dt>
+<dd><p>List the cloud services for scheduling defined on the account.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="azure.servicemanagement.html"
+                        title="previous chapter">azure.servicemanagement package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="azure.servicemanagement.servicebusmanagementservice.html"
+                        title="next chapter">azure.servicemanagement.servicebusmanagementservice module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/azure.servicemanagement.schedulermanagementservice.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.servicebusmanagementservice.html" title="azure.servicemanagement.servicebusmanagementservice module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.html" title="azure.servicemanagement package"
+             >previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li>
+          <li><a href="azure.servicemanagement.html" >azure.servicemanagement package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

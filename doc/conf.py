@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Azure SDK for Python documentation build configuration file, created by
-# sphinx-quickstart on Thu Feb 26 16:00:20 2015.
+# azure-sdk-for-python documentation build configuration file, created by
+# sphinx-quickstart on Fri Jun 27 15:42:45 2014.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -18,7 +18,7 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../azure'))
 
 # -- General configuration ------------------------------------------------
 
@@ -28,7 +28,8 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest',
+              'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -43,7 +44,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Azure SDK for Python'
+project = u'azure-sdk-for-python'
 copyright = u'2015, Microsoft'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -67,7 +68,7 @@ release = '0.9.0'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -93,12 +94,15 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
+# -- Options for extensions ----------------------------------------------------
+autoclass_content = 'both'
 
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = 'default'
+html_theme_options = {'collapsiblesidebar': True}
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -127,7 +131,7 @@ html_theme = 'default'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -176,7 +180,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'AzureSDKforPythondoc'
+htmlhelp_basename = 'azure-sdk-for-pythondoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -196,7 +200,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'AzureSDKforPython.tex', u'Azure SDK for Python Documentation',
+  ('index', 'azure-sdk-for-python.tex', u'azure-sdk-for-python Documentation',
    u'Microsoft', 'manual'),
 ]
 
@@ -221,38 +225,3 @@ latex_documents = [
 #latex_domain_indices = True
 
 
-# -- Options for manual page output ---------------------------------------
-
-# One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'azuresdkforpython', u'Azure SDK for Python Documentation',
-     [u'Microsoft'], 1)
-]
-
-# If true, show URL addresses after external links.
-#man_show_urls = False
-
-
-# -- Options for Texinfo output -------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-  ('index', 'AzureSDKforPython', u'Azure SDK for Python Documentation',
-   u'Microsoft', 'AzureSDKforPython', 'One line description of project.',
-   'Miscellaneous'),
-]
-
-# Documents to append as an appendix to all manuals.
-#texinfo_appendices = []
-
-# If false, no module index is generated.
-#texinfo_domain_indices = True
-
-# How to display URL addresses: 'footnote', 'no', or 'inline'.
-#texinfo_show_urls = 'footnote'
-
-# If true, do not generate a @detailmenu in the "Top" node's menu.
-#texinfo_no_detailmenu = False

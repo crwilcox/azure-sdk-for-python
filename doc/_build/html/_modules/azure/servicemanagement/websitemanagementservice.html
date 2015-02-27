@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.servicemanagement.websitemanagementservice &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../../../index.html" />
+    <link rel="up" title="azure.servicemanagement" href="../servicemanagement.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../azure.html" >azure</a> &raquo;</li>
+          <li><a href="../servicemanagement.html" accesskey="U">azure.servicemanagement</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for azure.servicemanagement.websitemanagementservice</h1><div class="highlight"><pre>
+<span class="c">#-------------------------------------------------------------------------</span>
+<span class="c"># Copyright (c) Microsoft.  All rights reserved.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#   http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+<span class="c">#--------------------------------------------------------------------------</span>
+<span class="kn">from</span> <span class="nn">azure</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANAGEMENT_HOST</span><span class="p">,</span>
+    <span class="n">_str</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">azure.servicemanagement</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WebSpaces</span><span class="p">,</span>
+    <span class="n">WebSpace</span><span class="p">,</span>
+    <span class="n">Sites</span><span class="p">,</span>
+    <span class="n">Site</span><span class="p">,</span>
+    <span class="n">MetricResponses</span><span class="p">,</span>
+    <span class="n">MetricDefinitions</span><span class="p">,</span>
+    <span class="n">PublishData</span><span class="p">,</span>
+    <span class="n">_XmlSerializer</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">azure.servicemanagement.servicemanagementclient</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_ServiceManagementClient</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="WebsiteManagementService"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService">[docs]</a><span class="k">class</span> <span class="nc">WebsiteManagementService</span><span class="p">(</span><span class="n">_ServiceManagementClient</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Note that this class is a preliminary work on WebSite</span>
+<span class="sd">        management. Since it lack a lot a features, final version</span>
+<span class="sd">        can be slightly different from the current one.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subscription_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cert_file</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">host</span><span class="o">=</span><span class="n">MANAGEMENT_HOST</span><span class="p">,</span> <span class="n">request_session</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initializes the website management service.</span>
+
+<span class="sd">        subscription_id: Subscription to manage.</span>
+<span class="sd">        cert_file:</span>
+<span class="sd">            Path to .pem certificate file (httplib), or location of the</span>
+<span class="sd">            certificate in your Personal certificate store (winhttp) in the</span>
+<span class="sd">            CURRENT_USER\my\CertificateName format.</span>
+<span class="sd">            If a request_session is specified, then this is unused.</span>
+<span class="sd">        host: Live ServiceClient URL. Defaults to Azure public cloud.</span>
+<span class="sd">        request_session:</span>
+<span class="sd">            Session object to use for http requests. If this is specified, it</span>
+<span class="sd">            replaces the default use of httplib or winhttp. Also, the cert_file</span>
+<span class="sd">            parameter is unused when a session is passed in.</span>
+<span class="sd">            The session object handles authentication, and as such can support</span>
+<span class="sd">            multiple types of authentication: .pem certificate, oauth.</span>
+<span class="sd">            For example, you can pass in a Session instance from the requests</span>
+<span class="sd">            library. To use .pem certificate authentication with requests</span>
+<span class="sd">            library, set the path to the .pem file on the session.cert</span>
+<span class="sd">            attribute.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WebsiteManagementService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
+            <span class="n">subscription_id</span><span class="p">,</span> <span class="n">cert_file</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">request_session</span><span class="p">)</span>
+
+    <span class="c">#--Operations for web sites ----------------------------------------</span>
+<div class="viewcode-block" id="WebsiteManagementService.list_webspaces"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.list_webspaces">[docs]</a>    <span class="k">def</span> <span class="nf">list_webspaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        List the webspaces defined on the account.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_list_webspaces_path</span><span class="p">(),</span>
+                                 <span class="n">WebSpaces</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.get_webspace"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_webspace">[docs]</a>    <span class="k">def</span> <span class="nf">get_webspace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get details of a specific webspace.</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_webspace_details_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">),</span>
+                                 <span class="n">WebSpace</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.list_sites"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.list_sites">[docs]</a>    <span class="k">def</span> <span class="nf">list_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        List the web sites defined on this webspace.</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_sites_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">),</span>
+                                 <span class="n">Sites</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.get_site"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_site">[docs]</a>    <span class="k">def</span> <span class="nf">get_site</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        List the web sites defined on this webspace.</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        website_name: The name of the website.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_sites_details_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">,</span>
+                                                              <span class="n">website_name</span><span class="p">),</span>
+                                 <span class="n">Site</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.create_site"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.create_site">[docs]</a>    <span class="k">def</span> <span class="nf">create_site</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span> <span class="n">geo_region</span><span class="p">,</span> <span class="n">host_names</span><span class="p">,</span>
+                    <span class="n">plan</span><span class="o">=</span><span class="s">&#39;VirtualDedicatedPlan&#39;</span><span class="p">,</span> <span class="n">compute_mode</span><span class="o">=</span><span class="s">&#39;Shared&#39;</span><span class="p">,</span>
+                    <span class="n">server_farm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">site_mode</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a website.</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        website_name: The name of the website.</span>
+<span class="sd">        geo_region:</span>
+<span class="sd">            The geographical region of the webspace that will be created.</span>
+<span class="sd">        host_names:</span>
+<span class="sd">            An array of fully qualified domain names for website. Only one</span>
+<span class="sd">            hostname can be specified in the azurewebsites.net domain.</span>
+<span class="sd">            The hostname should match the name of the website. Custom domains</span>
+<span class="sd">            can only be specified for Shared or Standard websites.</span>
+<span class="sd">        plan:</span>
+<span class="sd">            This value must be &#39;VirtualDedicatedPlan&#39;.</span>
+<span class="sd">        compute_mode:</span>
+<span class="sd">            This value should be &#39;Shared&#39; for the Free or Paid Shared</span>
+<span class="sd">            offerings, or &#39;Dedicated&#39; for the Standard offering. The default</span>
+<span class="sd">            value is &#39;Shared&#39;. If you set it to &#39;Dedicated&#39;, you must specify</span>
+<span class="sd">            a value for the server_farm parameter.</span>
+<span class="sd">        server_farm:</span>
+<span class="sd">            The name of the Server Farm associated with this website. This is</span>
+<span class="sd">            a required value for Standard mode.</span>
+<span class="sd">        site_mode:</span>
+<span class="sd">            Can be None, &#39;Limited&#39; or &#39;Basic&#39;. This value is &#39;Limited&#39; for the</span>
+<span class="sd">            Free offering, and &#39;Basic&#39; for the Paid Shared offering. Standard</span>
+<span class="sd">            mode does not use the site_mode parameter; it uses the compute_mode</span>
+<span class="sd">            parameter.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">xml</span> <span class="o">=</span> <span class="n">_XmlSerializer</span><span class="o">.</span><span class="n">create_website_to_xml</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span> <span class="n">geo_region</span><span class="p">,</span> <span class="n">plan</span><span class="p">,</span> <span class="n">host_names</span><span class="p">,</span> <span class="n">compute_mode</span><span class="p">,</span> <span class="n">server_farm</span><span class="p">,</span> <span class="n">site_mode</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_post</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_sites_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">),</span>
+            <span class="n">xml</span><span class="p">,</span>
+            <span class="n">Site</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.delete_site"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.delete_site">[docs]</a>    <span class="k">def</span> <span class="nf">delete_site</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span>
+                    <span class="n">delete_empty_server_farm</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">delete_metrics</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Delete a website.</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        website_name: The name of the website.</span>
+<span class="sd">        delete_empty_server_farm:</span>
+<span class="sd">            If the site being deleted is the last web site in a server farm,</span>
+<span class="sd">            you can delete the server farm by setting this to True.</span>
+<span class="sd">        delete_metrics:</span>
+<span class="sd">            To also delete the metrics for the site that you are deleting, you</span>
+<span class="sd">            can set this to True.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_sites_details_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">delete_empty_server_farm</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s">&#39;&amp;deleteEmptyServerFarm=true&#39;</span>
+        <span class="k">if</span> <span class="n">delete_metrics</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s">&#39;&amp;deleteMetrics=true&#39;</span>
+        <span class="k">if</span> <span class="n">query</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&#39;?&#39;</span> <span class="o">+</span> <span class="n">query</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s">&#39;&amp;&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_delete</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.restart_site"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.restart_site">[docs]</a>    <span class="k">def</span> <span class="nf">restart_site</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Restart a web site.</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        website_name: The name of the website.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_post</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_restart_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">),</span>
+            <span class="s">&#39;&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.get_historical_usage_metrics"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_historical_usage_metrics">[docs]</a>    <span class="k">def</span> <span class="nf">get_historical_usage_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">,</span>
+                                     <span class="n">metrics</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">time_grain</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get historical usage metrics.</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        website_name: The name of the website.</span>
+<span class="sd">        metrics: Optional. List of metrics name. Otherwise, all metrics returned.</span>
+<span class="sd">        start_time: Optional. An ISO8601 date. Otherwise, current hour is used.</span>
+<span class="sd">        end_time: Optional. An ISO8601 date. Otherwise, current time is used.</span>
+<span class="sd">        time_grain: Optional. A rollup name, as P1D. OTherwise, default rollup for the metrics is used.</span>
+<span class="sd">        More information and metrics name at:</span>
+<span class="sd">        http://msdn.microsoft.com/en-us/library/azure/dn166964.aspx</span>
+<span class="sd">        &#39;&#39;&#39;</span>        
+        <span class="n">metrics</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;names=&#39;</span><span class="o">+</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">metrics</span><span class="p">))</span> <span class="k">if</span> <span class="n">metrics</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;StartTime=&#39;</span><span class="o">+</span><span class="n">start_time</span><span class="p">)</span> <span class="k">if</span> <span class="n">start_time</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;EndTime=&#39;</span><span class="o">+</span><span class="n">end_time</span><span class="p">)</span> <span class="k">if</span> <span class="n">end_time</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">time_grain</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;TimeGrain=&#39;</span><span class="o">+</span><span class="n">time_grain</span><span class="p">)</span> <span class="k">if</span> <span class="n">time_grain</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;&amp;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">time_grain</span><span class="p">)</span> <span class="k">if</span> <span class="n">v</span><span class="p">))</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="s">&#39;?&#39;</span><span class="o">+</span><span class="n">parameters</span> <span class="k">if</span> <span class="n">parameters</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_historical_usage_metrics_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">)</span> <span class="o">+</span> <span class="n">parameters</span><span class="p">,</span>
+                                 <span class="n">MetricResponses</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.get_metric_definitions"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_metric_definitions">[docs]</a>    <span class="k">def</span> <span class="nf">get_metric_definitions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get metric definitions of metrics available of this web site.</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        website_name: The name of the website.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_metric_definitions_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">),</span>
+                                 <span class="n">MetricDefinitions</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.get_publish_profile_xml"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_publish_profile_xml">[docs]</a>    <span class="k">def</span> <span class="nf">get_publish_profile_xml</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get a site&#39;s publish profile as a string</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        website_name: The name of the website.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_publishxml_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">),</span>
+                                 <span class="bp">None</span><span class="p">)</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WebsiteManagementService.get_publish_profile"><a class="viewcode-back" href="../../../api/azure.servicemanagement.websitemanagementservice.html#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_publish_profile">[docs]</a>    <span class="k">def</span> <span class="nf">get_publish_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get a site&#39;s publish profile as an object</span>
+
+<span class="sd">        webspace_name: The name of the webspace.</span>
+<span class="sd">        website_name: The name of the website.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_publishxml_path</span><span class="p">(</span><span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">),</span>
+                                 <span class="n">PublishData</span><span class="p">)</span>
+
+    <span class="c">#--Helper functions --------------------------------------------------</span></div>
+    <span class="k">def</span> <span class="nf">_get_list_webspaces_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/webspaces&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_webspace_details_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/webspaces/&#39;</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_sites_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/webspaces/&#39;</span><span class="p">,</span>
+                              <span class="n">webspace_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/sites&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_get_sites_details_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/webspaces/&#39;</span><span class="p">,</span>
+                              <span class="n">webspace_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/sites/&#39;</span> <span class="o">+</span> <span class="n">_str</span><span class="p">(</span><span class="n">website_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_restart_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/webspaces/&#39;</span><span class="p">,</span>
+                              <span class="n">webspace_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/sites/&#39;</span> <span class="o">+</span> <span class="n">_str</span><span class="p">(</span><span class="n">website_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/restart/&#39;</span> 
+
+    <span class="k">def</span> <span class="nf">_get_historical_usage_metrics_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/webspaces/&#39;</span><span class="p">,</span>
+                              <span class="n">webspace_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/sites/&#39;</span> <span class="o">+</span> <span class="n">_str</span><span class="p">(</span><span class="n">website_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/metrics/&#39;</span> 
+                               
+    <span class="k">def</span> <span class="nf">_get_metric_definitions_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/webspaces/&#39;</span><span class="p">,</span>
+                              <span class="n">webspace_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/sites/&#39;</span> <span class="o">+</span> <span class="n">_str</span><span class="p">(</span><span class="n">website_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/metricdefinitions/&#39;</span> 
+
+    <span class="k">def</span> <span class="nf">_get_publishxml_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">webspace_name</span><span class="p">,</span> <span class="n">website_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/webspaces/&#39;</span><span class="p">,</span>
+                              <span class="n">webspace_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/sites/&#39;</span> <span class="o">+</span> <span class="n">_str</span><span class="p">(</span><span class="n">website_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/publishxml/&#39;</span> </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../azure.html" >azure</a> &raquo;</li>
+          <li><a href="../servicemanagement.html" >azure.servicemanagement</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

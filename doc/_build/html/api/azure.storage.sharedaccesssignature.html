@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.storage.sharedaccesssignature module &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../index.html" />
+    <link rel="up" title="azure.storage package" href="azure.storage.html" />
+    <link rel="next" title="azure.storage.storageclient module" href="azure.storage.storageclient.html" />
+    <link rel="prev" title="azure.storage.queueservice module" href="azure.storage.queueservice.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.storage.storageclient.html" title="azure.storage.storageclient module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="azure.storage.queueservice.html" title="azure.storage.queueservice module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li>
+          <li><a href="azure.storage.html" accesskey="U">azure.storage package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-azure.storage.sharedaccesssignature">
+<span id="azure-storage-sharedaccesssignature-module"></span><h1>azure.storage.sharedaccesssignature module<a class="headerlink" href="#module-azure.storage.sharedaccesssignature" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="azure.storage.sharedaccesssignature.Permission">
+<em class="property">class </em><tt class="descclassname">azure.storage.sharedaccesssignature.</tt><tt class="descname">Permission</tt><big>(</big><em>path=None</em>, <em>query_string=None</em><big>)</big><a class="reference internal" href="../_modules/azure/storage/sharedaccesssignature.html#Permission"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.storage.sharedaccesssignature.Permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Permission class. Contains the path and query_string for the path.</p>
+<p>path: the resource path
+query_string: dict of name, values. Contains SIGNED_START, SIGNED_EXPIRY</p>
+<blockquote>
+<div>SIGNED_RESOURCE, SIGNED_PERMISSION, SIGNED_IDENTIFIER,
+SIGNED_SIGNATURE name values.</div></blockquote>
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.storage.sharedaccesssignature.SharedAccessPolicy">
+<em class="property">class </em><tt class="descclassname">azure.storage.sharedaccesssignature.</tt><tt class="descname">SharedAccessPolicy</tt><big>(</big><em>access_policy</em>, <em>signed_identifier=None</em><big>)</big><a class="reference internal" href="../_modules/azure/storage/sharedaccesssignature.html#SharedAccessPolicy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.storage.sharedaccesssignature.SharedAccessPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>SharedAccessPolicy class.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.storage.sharedaccesssignature.SharedAccessSignature">
+<em class="property">class </em><tt class="descclassname">azure.storage.sharedaccesssignature.</tt><tt class="descname">SharedAccessSignature</tt><big>(</big><em>account_name</em>, <em>account_key</em>, <em>permission_set=None</em><big>)</big><a class="reference internal" href="../_modules/azure/storage/sharedaccesssignature.html#SharedAccessSignature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.storage.sharedaccesssignature.SharedAccessSignature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The main class used to do the signing and generating the signature.</p>
+<dl class="docutils">
+<dt>account_name:</dt>
+<dd>the storage account name used to generate shared access signature</dd>
+</dl>
+<p>account_key: the access key to genenerate share access signature
+permission_set: the permission cache used to signed the request url.</p>
+<dl class="method">
+<dt id="azure.storage.sharedaccesssignature.SharedAccessSignature.generate_signed_query_string">
+<tt class="descname">generate_signed_query_string</tt><big>(</big><em>path</em>, <em>resource_type</em>, <em>shared_access_policy</em>, <em>version='2012-02-12'</em><big>)</big><a class="reference internal" href="../_modules/azure/storage/sharedaccesssignature.html#SharedAccessSignature.generate_signed_query_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.storage.sharedaccesssignature.SharedAccessSignature.generate_signed_query_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates the query string for path, resource type and shared access
+policy.</p>
+<p>path: the resource
+resource_type: could be blob or container
+shared_access_policy: shared access policy
+version:</p>
+<blockquote>
+<div>x-ms-version for storage service, or None to get a signed query
+string compatible with pre 2012-02-12 clients, where the version
+is not included in the query string.</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.storage.sharedaccesssignature.SharedAccessSignature.sign_request">
+<tt class="descname">sign_request</tt><big>(</big><em>web_resource</em><big>)</big><a class="reference internal" href="../_modules/azure/storage/sharedaccesssignature.html#SharedAccessSignature.sign_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.storage.sharedaccesssignature.SharedAccessSignature.sign_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>sign request to generate request_url with sharedaccesssignature
+info for web_resource.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.storage.sharedaccesssignature.WebResource">
+<em class="property">class </em><tt class="descclassname">azure.storage.sharedaccesssignature.</tt><tt class="descname">WebResource</tt><big>(</big><em>path=None</em>, <em>request_url=None</em>, <em>properties=None</em><big>)</big><a class="reference internal" href="../_modules/azure/storage/sharedaccesssignature.html#WebResource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.storage.sharedaccesssignature.WebResource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Class that stands for the resource to get the share access signature</p>
+<p>path: the resource path.
+properties: dict of name and values. Contains 2 item: resource type and</p>
+<blockquote>
+<div>permission</div></blockquote>
+<p>request_url: the url of the webresource include all the queries.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="azure.storage.queueservice.html"
+                        title="previous chapter">azure.storage.queueservice module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="azure.storage.storageclient.html"
+                        title="next chapter">azure.storage.storageclient module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/azure.storage.sharedaccesssignature.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.storage.storageclient.html" title="azure.storage.storageclient module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="azure.storage.queueservice.html" title="azure.storage.queueservice module"
+             >previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li>
+          <li><a href="azure.storage.html" >azure.storage package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

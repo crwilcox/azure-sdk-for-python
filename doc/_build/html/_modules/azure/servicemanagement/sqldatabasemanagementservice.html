@@ -1,0 +1,491 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.servicemanagement.sqldatabasemanagementservice &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../../../index.html" />
+    <link rel="up" title="azure.servicemanagement" href="../servicemanagement.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../azure.html" >azure</a> &raquo;</li>
+          <li><a href="../servicemanagement.html" accesskey="U">azure.servicemanagement</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for azure.servicemanagement.sqldatabasemanagementservice</h1><div class="highlight"><pre>
+<span class="c">#-------------------------------------------------------------------------</span>
+<span class="c"># Copyright (c) Microsoft.  All rights reserved.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#   http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+<span class="c">#--------------------------------------------------------------------------</span>
+<span class="kn">from</span> <span class="nn">azure</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANAGEMENT_HOST</span><span class="p">,</span>
+    <span class="n">_validate_not_none</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">azure.servicemanagement</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EventLog</span><span class="p">,</span>
+    <span class="n">ServerQuota</span><span class="p">,</span>
+    <span class="n">Servers</span><span class="p">,</span>
+    <span class="n">ServiceObjective</span><span class="p">,</span>
+    <span class="n">Database</span><span class="p">,</span>
+    <span class="n">FirewallRule</span><span class="p">,</span>
+    <span class="n">_SqlManagementXmlSerializer</span><span class="p">,</span>
+    <span class="n">_MinidomXmlToObject</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">azure.servicemanagement.servicemanagementclient</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_ServiceManagementClient</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="SqlDatabaseManagementService"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService">[docs]</a><span class="k">class</span> <span class="nc">SqlDatabaseManagementService</span><span class="p">(</span><span class="n">_ServiceManagementClient</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Note that this class is a preliminary work on SQL Database</span>
+<span class="sd">        management. Since it lack a lot a features, final version</span>
+<span class="sd">        can be slightly different from the current one.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subscription_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cert_file</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">host</span><span class="o">=</span><span class="n">MANAGEMENT_HOST</span><span class="p">,</span> <span class="n">request_session</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initializes the sql database management service.</span>
+
+<span class="sd">        subscription_id: Subscription to manage.</span>
+<span class="sd">        cert_file:</span>
+<span class="sd">            Path to .pem certificate file (httplib), or location of the</span>
+<span class="sd">            certificate in your Personal certificate store (winhttp) in the</span>
+<span class="sd">            CURRENT_USER\my\CertificateName format.</span>
+<span class="sd">            If a request_session is specified, then this is unused.</span>
+<span class="sd">        host: Live ServiceClient URL. Defaults to Azure public cloud.</span>
+<span class="sd">        request_session:</span>
+<span class="sd">            Session object to use for http requests. If this is specified, it</span>
+<span class="sd">            replaces the default use of httplib or winhttp. Also, the cert_file</span>
+<span class="sd">            parameter is unused when a session is passed in.</span>
+<span class="sd">            The session object handles authentication, and as such can support</span>
+<span class="sd">            multiple types of authentication: .pem certificate, oauth.</span>
+<span class="sd">            For example, you can pass in a Session instance from the requests</span>
+<span class="sd">            library. To use .pem certificate authentication with requests</span>
+<span class="sd">            library, set the path to the .pem file on the session.cert</span>
+<span class="sd">            attribute.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SqlDatabaseManagementService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
+            <span class="n">subscription_id</span><span class="p">,</span> <span class="n">cert_file</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">request_session</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;application/xml&#39;</span>
+
+    <span class="c">#--Operations for sql servers ----------------------------------------</span>
+<div class="viewcode-block" id="SqlDatabaseManagementService.create_server"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.create_server">[docs]</a>    <span class="k">def</span> <span class="nf">create_server</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">admin_login</span><span class="p">,</span> <span class="n">admin_password</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a new Azure SQL Database server.</span>
+
+<span class="sd">        admin_login: The administrator login name for the new server.</span>
+<span class="sd">        admin_password: The administrator login password for the new server.</span>
+<span class="sd">        location: The region to deploy the new server.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;admin_login&#39;</span><span class="p">,</span> <span class="n">admin_login</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;admin_password&#39;</span><span class="p">,</span> <span class="n">admin_password</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;location&#39;</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">perform_post</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_servers_path</span><span class="p">(),</span>
+            <span class="n">_SqlManagementXmlSerializer</span><span class="o">.</span><span class="n">create_server_to_xml</span><span class="p">(</span>
+                <span class="n">admin_login</span><span class="p">,</span>
+                <span class="n">admin_password</span><span class="p">,</span>
+                <span class="n">location</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_SqlManagementXmlSerializer</span><span class="o">.</span><span class="n">xml_to_create_server_response</span><span class="p">(</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.set_server_admin_password"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.set_server_admin_password">[docs]</a>    <span class="k">def</span> <span class="nf">set_server_admin_password</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">admin_password</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Reset the administrator password for a server.</span>
+
+<span class="sd">        server_name: Name of the server to change the password.</span>
+<span class="sd">        admin_password: The new administrator password for the server.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;admin_password&#39;</span><span class="p">,</span> <span class="n">admin_password</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_post</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_servers_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;?op=ResetPassword&#39;</span><span class="p">,</span>
+            <span class="n">_SqlManagementXmlSerializer</span><span class="o">.</span><span class="n">set_server_admin_password_to_xml</span><span class="p">(</span>
+                <span class="n">admin_password</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.delete_server"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.delete_server">[docs]</a>    <span class="k">def</span> <span class="nf">delete_server</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deletes an Azure SQL Database server (including all its databases).</span>
+
+<span class="sd">        server_name: Name of the server you want to delete.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_delete</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_servers_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.list_servers"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.list_servers">[docs]</a>    <span class="k">def</span> <span class="nf">list_servers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        List the SQL servers defined on the account.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_servers_path</span><span class="p">(),</span>
+                                 <span class="n">Servers</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.list_quotas"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.list_quotas">[docs]</a>    <span class="k">def</span> <span class="nf">list_quotas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Gets quotas for an Azure SQL Database Server.</span>
+
+<span class="sd">        server_name: Name of the server.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_quotas_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">),</span>
+                                     <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_MinidomXmlToObject</span><span class="o">.</span><span class="n">parse_service_resources_response</span><span class="p">(</span>
+            <span class="n">response</span><span class="p">,</span> <span class="n">ServerQuota</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.get_server_event_logs"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.get_server_event_logs">[docs]</a>    <span class="k">def</span> <span class="nf">get_server_event_logs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span>
+                              <span class="n">interval_size_in_minutes</span><span class="p">,</span> <span class="n">event_types</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Gets the event logs for an Azure SQL Database Server.</span>
+
+<span class="sd">        server_name: Name of the server to retrieve the event logs from.</span>
+<span class="sd">        start_date:</span>
+<span class="sd">            The starting date and time of the events to retrieve in UTC format,</span>
+<span class="sd">            for example &#39;2011-09-28 16:05:00&#39;.</span>
+<span class="sd">        interval_size_in_minutes:</span>
+<span class="sd">            Size of the event logs to retrieve (in minutes).</span>
+<span class="sd">            Valid values are: 5, 60, or 1440.</span>
+<span class="sd">        event_types:</span>
+<span class="sd">            The event type of the log entries you want to retrieve.</span>
+<span class="sd">            Valid values are: </span>
+<span class="sd">                - connection_successful</span>
+<span class="sd">                - connection_failed</span>
+<span class="sd">                - connection_terminated</span>
+<span class="sd">                - deadlock</span>
+<span class="sd">                - throttling</span>
+<span class="sd">                - throttling_long_transaction</span>
+<span class="sd">            To return all event types pass in an empty string.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;start_date&#39;</span><span class="p">,</span> <span class="n">start_date</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;interval_size_in_minutes&#39;</span><span class="p">,</span> <span class="n">interval_size_in_minutes</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;event_types&#39;</span><span class="p">,</span> <span class="n">event_types</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_server_event_logs_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">)</span> <span class="o">+</span> \
+               <span class="s">&#39;?startDate={0}&amp;intervalSizeInMinutes={1}&amp;eventTypes={2}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">start_date</span><span class="p">,</span> <span class="n">interval_size_in_minutes</span><span class="p">,</span> <span class="n">event_types</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_MinidomXmlToObject</span><span class="o">.</span><span class="n">parse_service_resources_response</span><span class="p">(</span>
+            <span class="n">response</span><span class="p">,</span> <span class="n">EventLog</span><span class="p">)</span>
+
+    <span class="c">#--Operations for firewall rules ------------------------------------------</span></div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.create_firewall_rule"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.create_firewall_rule">[docs]</a>    <span class="k">def</span> <span class="nf">create_firewall_rule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">start_ip_address</span><span class="p">,</span>
+                             <span class="n">end_ip_address</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Creates an Azure SQL Database server firewall rule.</span>
+
+<span class="sd">        server_name: Name of the server to set the firewall rule on. </span>
+<span class="sd">        name: The name of the new firewall rule.</span>
+<span class="sd">        start_ip_address:</span>
+<span class="sd">            The lowest IP address in the range of the server-level firewall</span>
+<span class="sd">            setting. IP addresses equal to or greater than this can attempt to</span>
+<span class="sd">            connect to the server. The lowest possible IP address is 0.0.0.0.</span>
+<span class="sd">        end_ip_address:</span>
+<span class="sd">            The highest IP address in the range of the server-level firewall</span>
+<span class="sd">            setting. IP addresses equal to or less than this can attempt to</span>
+<span class="sd">            connect to the server. The highest possible IP address is</span>
+<span class="sd">            255.255.255.255.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;start_ip_address&#39;</span><span class="p">,</span> <span class="n">start_ip_address</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;end_ip_address&#39;</span><span class="p">,</span> <span class="n">end_ip_address</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_post</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_firewall_rules_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">),</span>
+            <span class="n">_SqlManagementXmlSerializer</span><span class="o">.</span><span class="n">create_firewall_rule_to_xml</span><span class="p">(</span>
+                <span class="n">name</span><span class="p">,</span> <span class="n">start_ip_address</span><span class="p">,</span> <span class="n">end_ip_address</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.update_firewall_rule"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.update_firewall_rule">[docs]</a>    <span class="k">def</span> <span class="nf">update_firewall_rule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">start_ip_address</span><span class="p">,</span>
+                             <span class="n">end_ip_address</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Update a firewall rule for an Azure SQL Database server.</span>
+
+<span class="sd">        server_name: Name of the server to set the firewall rule on. </span>
+<span class="sd">        name: The name of the firewall rule to update.</span>
+<span class="sd">        start_ip_address:</span>
+<span class="sd">            The lowest IP address in the range of the server-level firewall</span>
+<span class="sd">            setting. IP addresses equal to or greater than this can attempt to</span>
+<span class="sd">            connect to the server. The lowest possible IP address is 0.0.0.0.</span>
+<span class="sd">        end_ip_address:</span>
+<span class="sd">            The highest IP address in the range of the server-level firewall</span>
+<span class="sd">            setting. IP addresses equal to or less than this can attempt to</span>
+<span class="sd">            connect to the server. The highest possible IP address is</span>
+<span class="sd">            255.255.255.255.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;start_ip_address&#39;</span><span class="p">,</span> <span class="n">start_ip_address</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;end_ip_address&#39;</span><span class="p">,</span> <span class="n">end_ip_address</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_put</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_firewall_rules_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span>
+            <span class="n">_SqlManagementXmlSerializer</span><span class="o">.</span><span class="n">update_firewall_rule_to_xml</span><span class="p">(</span>
+                <span class="n">name</span><span class="p">,</span> <span class="n">start_ip_address</span><span class="p">,</span> <span class="n">end_ip_address</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.delete_firewall_rule"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.delete_firewall_rule">[docs]</a>    <span class="k">def</span> <span class="nf">delete_firewall_rule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deletes an Azure SQL Database server firewall rule.</span>
+
+<span class="sd">        server_name:</span>
+<span class="sd">            Name of the server with the firewall rule you want to delete.</span>
+<span class="sd">        name:</span>
+<span class="sd">            Name of the firewall rule you want to delete.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_delete</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_firewall_rules_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.list_firewall_rules"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.list_firewall_rules">[docs]</a>    <span class="k">def</span> <span class="nf">list_firewall_rules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Retrieves the set of firewall rules for an Azure SQL Database Server.</span>
+
+<span class="sd">        server_name: Name of the server.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_firewall_rules_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">),</span>
+                                     <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_MinidomXmlToObject</span><span class="o">.</span><span class="n">parse_service_resources_response</span><span class="p">(</span>
+            <span class="n">response</span><span class="p">,</span> <span class="n">FirewallRule</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.list_service_level_objectives"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.list_service_level_objectives">[docs]</a>    <span class="k">def</span> <span class="nf">list_service_level_objectives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Gets the service level objectives for an Azure SQL Database server.</span>
+
+<span class="sd">        server_name: Name of the server.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_service_objectives_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_MinidomXmlToObject</span><span class="o">.</span><span class="n">parse_service_resources_response</span><span class="p">(</span>
+            <span class="n">response</span><span class="p">,</span> <span class="n">ServiceObjective</span><span class="p">)</span>
+
+    <span class="c">#--Operations for sql databases ----------------------------------------</span></div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.create_database"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.create_database">[docs]</a>    <span class="k">def</span> <span class="nf">create_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">service_objective_id</span><span class="p">,</span>
+                        <span class="n">edition</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">collation_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                        <span class="n">max_size_bytes</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Creates a new Azure SQL Database.</span>
+
+<span class="sd">        server_name: Name of the server to contain the new database.</span>
+<span class="sd">        name:</span>
+<span class="sd">            Required. The name for the new database. See Naming Requirements</span>
+<span class="sd">            in Azure SQL Database General Guidelines and Limitations and</span>
+<span class="sd">            Database Identifiers for more information.</span>
+<span class="sd">        service_objective_id:</span>
+<span class="sd">            Required. The GUID corresponding to the performance level for</span>
+<span class="sd">            Edition. See List Service Level Objectives for current values.</span>
+<span class="sd">        edition:</span>
+<span class="sd">            Optional. The Service Tier (Edition) for the new database. If</span>
+<span class="sd">            omitted, the default is Web. Valid values are Web, Business,</span>
+<span class="sd">            Basic, Standard, and Premium. See Azure SQL Database Service Tiers</span>
+<span class="sd">            (Editions) and Web and Business Edition Sunset FAQ for more</span>
+<span class="sd">            information.</span>
+<span class="sd">        collation_name:</span>
+<span class="sd">            Optional. The database collation. This can be any collation</span>
+<span class="sd">            supported by SQL. If omitted, the default collation is used. See</span>
+<span class="sd">            SQL Server Collation Support in Azure SQL Database General</span>
+<span class="sd">            Guidelines and Limitations for more information.</span>
+<span class="sd">        max_size_bytes:</span>
+<span class="sd">            Optional. Sets the maximum size, in bytes, for the database. This</span>
+<span class="sd">            value must be within the range of allowed values for Edition. If</span>
+<span class="sd">            omitted, the default value for the edition is used. See Azure SQL</span>
+<span class="sd">            Database Service Tiers (Editions) for current maximum databases</span>
+<span class="sd">            sizes. Convert MB or GB values to bytes.</span>
+<span class="sd">            1 MB = 1048576 bytes. 1 GB = 1073741824 bytes.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;service_objective_id&#39;</span><span class="p">,</span> <span class="n">service_objective_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_post</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_databases_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">),</span>
+            <span class="n">_SqlManagementXmlSerializer</span><span class="o">.</span><span class="n">create_database_to_xml</span><span class="p">(</span>
+                <span class="n">name</span><span class="p">,</span> <span class="n">service_objective_id</span><span class="p">,</span> <span class="n">edition</span><span class="p">,</span> <span class="n">collation_name</span><span class="p">,</span>
+                <span class="n">max_size_bytes</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.update_database"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.update_database">[docs]</a>    <span class="k">def</span> <span class="nf">update_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">new_database_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                        <span class="n">service_objective_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">edition</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                        <span class="n">max_size_bytes</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Updates existing database details.</span>
+
+<span class="sd">        server_name: Name of the server to contain the new database.</span>
+<span class="sd">        name:</span>
+<span class="sd">            Required. The name for the new database. See Naming Requirements</span>
+<span class="sd">            in Azure SQL Database General Guidelines and Limitations and</span>
+<span class="sd">            Database Identifiers for more information.</span>
+<span class="sd">        new_database_name:</span>
+<span class="sd">            Optional. The new name for the new database.</span>
+<span class="sd">        service_objective_id:</span>
+<span class="sd">            Optional. The new service level to apply to the database. For more</span>
+<span class="sd">            information about service levels, see Azure SQL Database Service</span>
+<span class="sd">            Tiers and Performance Levels. Use List Service Level Objectives to</span>
+<span class="sd">            get the correct ID for the desired service objective.</span>
+<span class="sd">        edition:</span>
+<span class="sd">            Optional. The new edition for the new database.</span>
+<span class="sd">        max_size_bytes:</span>
+<span class="sd">            Optional. The new size of the database in bytes. For information on</span>
+<span class="sd">            available sizes for each edition, see Azure SQL Database Service</span>
+<span class="sd">            Tiers (Editions).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+        <span class="n">_validate_not_none</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_put</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_databases_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span>
+            <span class="n">_SqlManagementXmlSerializer</span><span class="o">.</span><span class="n">update_database_to_xml</span><span class="p">(</span>
+                <span class="n">new_database_name</span><span class="p">,</span> <span class="n">service_objective_id</span><span class="p">,</span> <span class="n">edition</span><span class="p">,</span>
+                <span class="n">max_size_bytes</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.delete_database"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.delete_database">[docs]</a>    <span class="k">def</span> <span class="nf">delete_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deletes an Azure SQL Database.</span>
+
+<span class="sd">        server_name: Name of the server where the database is located.</span>
+<span class="sd">        name: Name of the database to delete.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_databases_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="SqlDatabaseManagementService.list_databases"><a class="viewcode-back" href="../../../api/azure.servicemanagement.sqldatabasemanagementservice.html#azure.servicemanagement.sqldatabasemanagementservice.SqlDatabaseManagementService.list_databases">[docs]</a>    <span class="k">def</span> <span class="nf">list_databases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        List the SQL databases defined on the specified server name</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perform_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_list_databases_path</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
+                                     <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_MinidomXmlToObject</span><span class="o">.</span><span class="n">parse_service_resources_response</span><span class="p">(</span>
+            <span class="n">response</span><span class="p">,</span> <span class="n">Database</span><span class="p">)</span>
+
+
+    <span class="c">#--Helper functions --------------------------------------------------</span></div>
+    <span class="k">def</span> <span class="nf">_get_servers_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/sqlservers/servers&#39;</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_firewall_rules_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_servers_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/firewallrules&#39;</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">def</span> <span class="nf">_get_databases_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_servers_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/databases&#39;</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">def</span> <span class="nf">_get_server_event_logs_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_servers_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/events&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_get_service_objectives_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_servers_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/serviceobjectives&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_get_quotas_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_servers_path</span><span class="p">(</span><span class="n">server_name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/serverquotas&#39;</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">name</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">def</span> <span class="nf">_get_list_databases_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="c"># *contentview=generic is mandatory*</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="s">&#39;services/sqlservers/servers/&#39;</span><span class="p">,</span>
+                              <span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/databases?contentview=generic&#39;</span> 
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../azure.html" >azure</a> &raquo;</li>
+          <li><a href="../servicemanagement.html" >azure.servicemanagement</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

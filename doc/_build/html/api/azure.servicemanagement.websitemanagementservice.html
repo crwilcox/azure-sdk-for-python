@@ -1,0 +1,277 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.servicemanagement.websitemanagementservice module &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../index.html" />
+    <link rel="up" title="azure.servicemanagement package" href="azure.servicemanagement.html" />
+    <link rel="next" title="azure.storage package" href="azure.storage.html" />
+    <link rel="prev" title="azure.servicemanagement.sqldatabasemanagementservice module" href="azure.servicemanagement.sqldatabasemanagementservice.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.storage.html" title="azure.storage package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.sqldatabasemanagementservice.html" title="azure.servicemanagement.sqldatabasemanagementservice module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li>
+          <li><a href="azure.servicemanagement.html" accesskey="U">azure.servicemanagement package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-azure.servicemanagement.websitemanagementservice">
+<span id="azure-servicemanagement-websitemanagementservice-module"></span><h1>azure.servicemanagement.websitemanagementservice module<a class="headerlink" href="#module-azure.servicemanagement.websitemanagementservice" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService">
+<em class="property">class </em><tt class="descclassname">azure.servicemanagement.websitemanagementservice.</tt><tt class="descname">WebsiteManagementService</tt><big>(</big><em>subscription_id=None</em>, <em>cert_file=None</em>, <em>host='management.core.windows.net'</em>, <em>request_session=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">azure.servicemanagement.servicemanagementclient._ServiceManagementClient</span></tt></p>
+<p>Note that this class is a preliminary work on WebSite
+management. Since it lack a lot a features, final version
+can be slightly different from the current one.</p>
+<p>Initializes the website management service.</p>
+<p>subscription_id: Subscription to manage.
+cert_file:</p>
+<blockquote>
+<div>Path to .pem certificate file (httplib), or location of the
+certificate in your Personal certificate store (winhttp) in the
+CURRENT_USERmyCertificateName format.
+If a request_session is specified, then this is unused.</div></blockquote>
+<p>host: Live ServiceClient URL. Defaults to Azure public cloud.
+request_session:</p>
+<blockquote>
+<div>Session object to use for http requests. If this is specified, it
+replaces the default use of httplib or winhttp. Also, the cert_file
+parameter is unused when a session is passed in.
+The session object handles authentication, and as such can support
+multiple types of authentication: .pem certificate, oauth.
+For example, you can pass in a Session instance from the requests
+library. To use .pem certificate authentication with requests
+library, set the path to the .pem file on the session.cert
+attribute.</div></blockquote>
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.create_site">
+<tt class="descname">create_site</tt><big>(</big><em>webspace_name</em>, <em>website_name</em>, <em>geo_region</em>, <em>host_names</em>, <em>plan='VirtualDedicatedPlan'</em>, <em>compute_mode='Shared'</em>, <em>server_farm=None</em>, <em>site_mode=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.create_site"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.create_site" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a website.</p>
+<p>webspace_name: The name of the webspace.
+website_name: The name of the website.
+geo_region:</p>
+<blockquote>
+<div>The geographical region of the webspace that will be created.</div></blockquote>
+<dl class="docutils">
+<dt>host_names:</dt>
+<dd>An array of fully qualified domain names for website. Only one
+hostname can be specified in the azurewebsites.net domain.
+The hostname should match the name of the website. Custom domains
+can only be specified for Shared or Standard websites.</dd>
+<dt>plan:</dt>
+<dd>This value must be &#8216;VirtualDedicatedPlan&#8217;.</dd>
+<dt>compute_mode:</dt>
+<dd>This value should be &#8216;Shared&#8217; for the Free or Paid Shared
+offerings, or &#8216;Dedicated&#8217; for the Standard offering. The default
+value is &#8216;Shared&#8217;. If you set it to &#8216;Dedicated&#8217;, you must specify
+a value for the server_farm parameter.</dd>
+<dt>server_farm:</dt>
+<dd>The name of the Server Farm associated with this website. This is
+a required value for Standard mode.</dd>
+<dt>site_mode:</dt>
+<dd>Can be None, &#8216;Limited&#8217; or &#8216;Basic&#8217;. This value is &#8216;Limited&#8217; for the
+Free offering, and &#8216;Basic&#8217; for the Paid Shared offering. Standard
+mode does not use the site_mode parameter; it uses the compute_mode
+parameter.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.delete_site">
+<tt class="descname">delete_site</tt><big>(</big><em>webspace_name</em>, <em>website_name</em>, <em>delete_empty_server_farm=False</em>, <em>delete_metrics=False</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.delete_site"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.delete_site" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a website.</p>
+<p>webspace_name: The name of the webspace.
+website_name: The name of the website.
+delete_empty_server_farm:</p>
+<blockquote>
+<div>If the site being deleted is the last web site in a server farm,
+you can delete the server farm by setting this to True.</div></blockquote>
+<dl class="docutils">
+<dt>delete_metrics:</dt>
+<dd>To also delete the metrics for the site that you are deleting, you
+can set this to True.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_historical_usage_metrics">
+<tt class="descname">get_historical_usage_metrics</tt><big>(</big><em>webspace_name</em>, <em>website_name</em>, <em>metrics=None</em>, <em>start_time=None</em>, <em>end_time=None</em>, <em>time_grain=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.get_historical_usage_metrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_historical_usage_metrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get historical usage metrics.</p>
+<p>webspace_name: The name of the webspace.
+website_name: The name of the website.
+metrics: Optional. List of metrics name. Otherwise, all metrics returned.
+start_time: Optional. An ISO8601 date. Otherwise, current hour is used.
+end_time: Optional. An ISO8601 date. Otherwise, current time is used.
+time_grain: Optional. A rollup name, as P1D. OTherwise, default rollup for the metrics is used.
+More information and metrics name at:
+<a class="reference external" href="http://msdn.microsoft.com/en-us/library/azure/dn166964.aspx">http://msdn.microsoft.com/en-us/library/azure/dn166964.aspx</a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_metric_definitions">
+<tt class="descname">get_metric_definitions</tt><big>(</big><em>webspace_name</em>, <em>website_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.get_metric_definitions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_metric_definitions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get metric definitions of metrics available of this web site.</p>
+<p>webspace_name: The name of the webspace.
+website_name: The name of the website.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_publish_profile">
+<tt class="descname">get_publish_profile</tt><big>(</big><em>webspace_name</em>, <em>website_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.get_publish_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_publish_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a site&#8217;s publish profile as an object</p>
+<p>webspace_name: The name of the webspace.
+website_name: The name of the website.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_publish_profile_xml">
+<tt class="descname">get_publish_profile_xml</tt><big>(</big><em>webspace_name</em>, <em>website_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.get_publish_profile_xml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_publish_profile_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a site&#8217;s publish profile as a string</p>
+<p>webspace_name: The name of the webspace.
+website_name: The name of the website.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_site">
+<tt class="descname">get_site</tt><big>(</big><em>webspace_name</em>, <em>website_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.get_site"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_site" title="Permalink to this definition">¶</a></dt>
+<dd><p>List the web sites defined on this webspace.</p>
+<p>webspace_name: The name of the webspace.
+website_name: The name of the website.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_webspace">
+<tt class="descname">get_webspace</tt><big>(</big><em>webspace_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.get_webspace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.get_webspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details of a specific webspace.</p>
+<p>webspace_name: The name of the webspace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.list_sites">
+<tt class="descname">list_sites</tt><big>(</big><em>webspace_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.list_sites"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.list_sites" title="Permalink to this definition">¶</a></dt>
+<dd><p>List the web sites defined on this webspace.</p>
+<p>webspace_name: The name of the webspace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.list_webspaces">
+<tt class="descname">list_webspaces</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.list_webspaces"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.list_webspaces" title="Permalink to this definition">¶</a></dt>
+<dd><p>List the webspaces defined on the account.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.websitemanagementservice.WebsiteManagementService.restart_site">
+<tt class="descname">restart_site</tt><big>(</big><em>webspace_name</em>, <em>website_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/websitemanagementservice.html#WebsiteManagementService.restart_site"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.websitemanagementservice.WebsiteManagementService.restart_site" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart a web site.</p>
+<p>webspace_name: The name of the webspace.
+website_name: The name of the website.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="azure.servicemanagement.sqldatabasemanagementservice.html"
+                        title="previous chapter">azure.servicemanagement.sqldatabasemanagementservice module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="azure.storage.html"
+                        title="next chapter">azure.storage package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/azure.servicemanagement.websitemanagementservice.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.storage.html" title="azure.storage package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.sqldatabasemanagementservice.html" title="azure.servicemanagement.sqldatabasemanagementservice module"
+             >previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li>
+          <li><a href="azure.servicemanagement.html" >azure.servicemanagement package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

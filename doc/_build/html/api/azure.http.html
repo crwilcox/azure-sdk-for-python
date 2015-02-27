@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.http package &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../index.html" />
+    <link rel="up" title="azure package" href="azure.html" />
+    <link rel="next" title="azure.http.batchclient module" href="azure.http.batchclient.html" />
+    <link rel="prev" title="azure package" href="azure.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.http.batchclient.html" title="azure.http.batchclient module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="azure.html" title="azure package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" accesskey="U">azure package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="azure-http-package">
+<h1>azure.http package<a class="headerlink" href="#azure-http-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="azure.http.batchclient.html">azure.http.batchclient module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="azure.http.httpclient.html">azure.http.httpclient module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="azure.http.requestsclient.html">azure.http.requestsclient module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="azure.http.winhttp.html">azure.http.winhttp module</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="module-azure.http">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-azure.http" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="azure.http.HTTPError">
+<em class="property">exception </em><tt class="descclassname">azure.http.</tt><tt class="descname">HTTPError</tt><big>(</big><em>status</em>, <em>message</em>, <em>respheader</em>, <em>respbody</em><big>)</big><a class="reference internal" href="../_modules/azure/http.html#HTTPError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.http.HTTPError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>HTTP Exception when response status code &gt;= 300</p>
+<p>Creates a new HTTPError with the specified status, message,
+response headers and body</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.http.HTTPRequest">
+<em class="property">class </em><tt class="descclassname">azure.http.</tt><tt class="descname">HTTPRequest</tt><a class="reference internal" href="../_modules/azure/http.html#HTTPRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.http.HTTPRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents an HTTP Request.  An HTTP Request consists of the following
+attributes:</p>
+<p>host: the host name to connect to
+method: the method to use to connect (string such as GET, POST, PUT, etc.)
+path: the uri fragment
+query: query parameters specified as a list of (name, value) pairs
+headers: header values specified as (name, value) pairs
+body: the body of the request.
+protocol_override:</p>
+<blockquote>
+<div>specify to use this protocol instead of the global one stored in
+_HTTPClient.</div></blockquote>
+</dd></dl>
+
+<dl class="class">
+<dt id="azure.http.HTTPResponse">
+<em class="property">class </em><tt class="descclassname">azure.http.</tt><tt class="descname">HTTPResponse</tt><big>(</big><em>status</em>, <em>message</em>, <em>headers</em>, <em>body</em><big>)</big><a class="reference internal" href="../_modules/azure/http.html#HTTPResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.http.HTTPResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents a response from an HTTP request.  An HTTPResponse has the
+following attributes:</p>
+<p>status: the status code of the response
+message: the message
+headers: the returned headers, as a list of (name, value) pairs
+body: the body of the response</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">azure.http package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-azure.http">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="azure.html"
+                        title="previous chapter">azure package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="azure.http.batchclient.html"
+                        title="next chapter">azure.http.batchclient module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/azure.http.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.http.batchclient.html" title="azure.http.batchclient module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="azure.html" title="azure package"
+             >previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,979 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.storage &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../../index.html" />
+    <link rel="up" title="azure" href="../azure.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../azure.html" accesskey="U">azure</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for azure.storage</h1><div class="highlight"><pre>
+<span class="c">#-------------------------------------------------------------------------</span>
+<span class="c"># Copyright (c) Microsoft.  All rights reserved.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#   http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+<span class="c">#--------------------------------------------------------------------------</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">types</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">dateutil</span> <span class="kn">import</span> <span class="n">parser</span>
+<span class="kn">from</span> <span class="nn">dateutil.tz</span> <span class="kn">import</span> <span class="n">tzutc</span>
+<span class="kn">from</span> <span class="nn">azure</span> <span class="kn">import</span> <span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">,</span>
+                   <span class="n">WindowsAzureError</span><span class="p">,</span>
+                   <span class="n">METADATA_NS</span><span class="p">,</span>
+                   <span class="n">xml_escape</span><span class="p">,</span>
+                   <span class="n">_create_entry</span><span class="p">,</span>
+                   <span class="n">_decode_base64_to_text</span><span class="p">,</span>
+                   <span class="n">_decode_base64_to_bytes</span><span class="p">,</span>
+                   <span class="n">_encode_base64</span><span class="p">,</span>
+                   <span class="n">_general_error_handler</span><span class="p">,</span>
+                   <span class="n">_list_of</span><span class="p">,</span>
+                   <span class="n">_parse_response_for_dict</span><span class="p">,</span>
+                   <span class="n">_sign_string</span><span class="p">,</span>
+                   <span class="n">_unicode_type</span><span class="p">,</span>
+                   <span class="n">_ERROR_CANNOT_SERIALIZE_VALUE_TO_ENTITY</span><span class="p">,</span>
+                   <span class="n">_etree_entity_feed_namespaces</span><span class="p">,</span>
+                   <span class="n">_make_etree_ns_attr_name</span><span class="p">,</span>
+                   <span class="n">_get_etree_tag_name_without_ns</span><span class="p">,</span>
+                   <span class="n">_get_etree_text</span><span class="p">,</span>
+                   <span class="n">ETree</span><span class="p">,</span>
+                   <span class="n">_ETreeXmlToObject</span><span class="p">,</span>
+                   <span class="p">)</span>
+
+<span class="c"># x-ms-version for storage service.</span>
+<span class="n">X_MS_VERSION</span> <span class="o">=</span> <span class="s">&#39;2012-02-12&#39;</span>
+
+
+<div class="viewcode-block" id="EnumResultsBase"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.EnumResultsBase">[docs]</a><span class="k">class</span> <span class="nc">EnumResultsBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; base class for EnumResults. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marker</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_results</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">next_marker</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+
+</div>
+<div class="viewcode-block" id="ContainerEnumResults"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.ContainerEnumResults">[docs]</a><span class="k">class</span> <span class="nc">ContainerEnumResults</span><span class="p">(</span><span class="n">EnumResultsBase</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Blob Container list. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">EnumResultsBase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">containers</span> <span class="o">=</span> <span class="n">_list_of</span><span class="p">(</span><span class="n">Container</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">containers</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">containers</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">containers</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="Container"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.Container">[docs]</a><span class="k">class</span> <span class="nc">Container</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Blob container class. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">Properties</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+
+</div>
+<div class="viewcode-block" id="Properties"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.Properties">[docs]</a><span class="k">class</span> <span class="nc">Properties</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Blob container&#39;s properties class. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_modified</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">etag</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+
+</div>
+<div class="viewcode-block" id="RetentionPolicy"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.RetentionPolicy">[docs]</a><span class="k">class</span> <span class="nc">RetentionPolicy</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; RetentionPolicy in service properties. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;days&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="RetentionPolicy.get_days"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.RetentionPolicy.get_days">[docs]</a>    <span class="k">def</span> <span class="nf">get_days</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># convert days to int value</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;days&#39;</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="RetentionPolicy.set_days"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.RetentionPolicy.set_days">[docs]</a>    <span class="k">def</span> <span class="nf">set_days</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; set default days if days is set to empty. &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;days&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+    <span class="n">days</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fget</span><span class="o">=</span><span class="n">get_days</span><span class="p">,</span> <span class="n">fset</span><span class="o">=</span><span class="n">set_days</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Logging"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.Logging">[docs]</a><span class="k">class</span> <span class="nc">Logging</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Logging class in service properties. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s">u&#39;1.0&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delete</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retention_policy</span> <span class="o">=</span> <span class="n">RetentionPolicy</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="Metrics"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.Metrics">[docs]</a><span class="k">class</span> <span class="nc">Metrics</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Metrics class in service properties. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s">u&#39;1.0&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">include_apis</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retention_policy</span> <span class="o">=</span> <span class="n">RetentionPolicy</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="StorageServiceProperties"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.StorageServiceProperties">[docs]</a><span class="k">class</span> <span class="nc">StorageServiceProperties</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Storage Service Propeties class. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logging</span> <span class="o">=</span> <span class="n">Logging</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">Metrics</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="AccessPolicy"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.AccessPolicy">[docs]</a><span class="k">class</span> <span class="nc">AccessPolicy</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Access Policy class in service properties. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s">u&#39;&#39;</span><span class="p">,</span> <span class="n">expiry</span><span class="o">=</span><span class="s">u&#39;&#39;</span><span class="p">,</span> <span class="n">permission</span><span class="o">=</span><span class="s">&#39;u&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expiry</span> <span class="o">=</span> <span class="n">expiry</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">permission</span> <span class="o">=</span> <span class="n">permission</span>
+
+</div>
+<div class="viewcode-block" id="SignedIdentifier"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.SignedIdentifier">[docs]</a><span class="k">class</span> <span class="nc">SignedIdentifier</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Signed Identifier class for service properties. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">access_policy</span> <span class="o">=</span> <span class="n">AccessPolicy</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="SignedIdentifiers"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.SignedIdentifiers">[docs]</a><span class="k">class</span> <span class="nc">SignedIdentifiers</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; SignedIdentifier list. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signed_identifiers</span> <span class="o">=</span> <span class="n">_list_of</span><span class="p">(</span><span class="n">SignedIdentifier</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signed_identifiers</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signed_identifiers</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">signed_identifiers</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="BlobEnumResults"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.BlobEnumResults">[docs]</a><span class="k">class</span> <span class="nc">BlobEnumResults</span><span class="p">(</span><span class="n">EnumResultsBase</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Blob list.&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">EnumResultsBase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blobs</span> <span class="o">=</span> <span class="n">_list_of</span><span class="p">(</span><span class="n">Blob</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefixes</span> <span class="o">=</span> <span class="n">_list_of</span><span class="p">(</span><span class="n">BlobPrefix</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delimiter</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blobs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blobs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blobs</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="BlobResult"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.BlobResult">[docs]</a><span class="k">class</span> <span class="nc">BlobResult</span><span class="p">(</span><span class="nb">bytes</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">blob</span><span class="p">,</span> <span class="n">properties</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">blob</span> <span class="k">if</span> <span class="n">blob</span> <span class="k">else</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blob</span><span class="p">,</span> <span class="n">properties</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span>
+
+</div>
+<div class="viewcode-block" id="Blob"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.Blob">[docs]</a><span class="k">class</span> <span class="nc">Blob</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Blob class. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">snapshot</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">BlobProperties</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+
+</div>
+<div class="viewcode-block" id="BlobProperties"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.BlobProperties">[docs]</a><span class="k">class</span> <span class="nc">BlobProperties</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Blob Properties &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_modified</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">etag</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_length</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_encoding</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_language</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_md5</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xms_blob_sequence_number</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blob_type</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lease_status</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lease_state</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lease_duration</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_id</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_source</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_status</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_progress</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_completion_time</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_status_description</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+
+</div>
+<div class="viewcode-block" id="BlobPrefix"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.BlobPrefix">[docs]</a><span class="k">class</span> <span class="nc">BlobPrefix</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; BlobPrefix in Blob. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+</div>
+<div class="viewcode-block" id="BlobBlock"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.BlobBlock">[docs]</a><span class="k">class</span> <span class="nc">BlobBlock</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; BlobBlock class &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+
+</div>
+<div class="viewcode-block" id="BlobBlockList"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.BlobBlockList">[docs]</a><span class="k">class</span> <span class="nc">BlobBlockList</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; BlobBlockList class &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">committed_blocks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uncommitted_blocks</span> <span class="o">=</span> <span class="p">[]</span>
+
+</div>
+<div class="viewcode-block" id="PageRange"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.PageRange">[docs]</a><span class="k">class</span> <span class="nc">PageRange</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Page Range for page blob. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="mi">0</span>
+
+</div>
+<div class="viewcode-block" id="PageList"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.PageList">[docs]</a><span class="k">class</span> <span class="nc">PageList</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Page list for page blob. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">page_ranges</span> <span class="o">=</span> <span class="n">_list_of</span><span class="p">(</span><span class="n">PageRange</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">page_ranges</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">page_ranges</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_ranges</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="QueueEnumResults"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.QueueEnumResults">[docs]</a><span class="k">class</span> <span class="nc">QueueEnumResults</span><span class="p">(</span><span class="n">EnumResultsBase</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Queue list&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">EnumResultsBase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queues</span> <span class="o">=</span> <span class="n">_list_of</span><span class="p">(</span><span class="n">Queue</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queues</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queues</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">queues</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="Queue"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.Queue">[docs]</a><span class="k">class</span> <span class="nc">Queue</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Queue class &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+
+</div>
+<div class="viewcode-block" id="QueueMessagesList"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.QueueMessagesList">[docs]</a><span class="k">class</span> <span class="nc">QueueMessagesList</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Queue message list. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue_messages</span> <span class="o">=</span> <span class="n">_list_of</span><span class="p">(</span><span class="n">QueueMessage</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue_messages</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue_messages</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_messages</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="QueueMessage"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.QueueMessage">[docs]</a><span class="k">class</span> <span class="nc">QueueMessage</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Queue message class. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">insertion_time</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expiration_time</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pop_receipt</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_next_visible</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dequeue_count</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_text</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+
+</div>
+<div class="viewcode-block" id="Entity"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.Entity">[docs]</a><span class="k">class</span> <span class="nc">Entity</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Entity class. The attributes of entity will be created dynamically. &#39;&#39;&#39;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="EntityProperty"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.EntityProperty">[docs]</a><span class="k">class</span> <span class="nc">EntityProperty</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Entity property. contains type and value.  &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+
+</div>
+<div class="viewcode-block" id="Table"><a class="viewcode-back" href="../../api/azure.storage.html#azure.storage.Table">[docs]</a><span class="k">class</span> <span class="nc">Table</span><span class="p">(</span><span class="n">WindowsAzureData</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; Only for intellicens and telling user the return type. &#39;&#39;&#39;</span>
+    <span class="k">pass</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_parse_blob_enum_results_list</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="n">respbody</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">body</span>
+    <span class="n">return_obj</span> <span class="o">=</span> <span class="n">BlobEnumResults</span><span class="p">()</span>
+    <span class="n">enum_results</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">respbody</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">enum_results</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;./Blobs/Blob&#39;</span><span class="p">):</span>
+        <span class="n">return_obj</span><span class="o">.</span><span class="n">blobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">fill_instance_element</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Blob</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">enum_results</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;./Blobs/BlobPrefix&#39;</span><span class="p">):</span>
+        <span class="n">return_obj</span><span class="o">.</span><span class="n">prefixes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">fill_instance_element</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">BlobPrefix</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">return_obj</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;blobs&#39;</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;prefixes&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">fill_data_member</span><span class="p">(</span><span class="n">enum_results</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">return_obj</span>
+
+
+<span class="k">def</span> <span class="nf">_update_storage_header</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; add additional headers for storage request. &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span>
+
+    <span class="c"># if it is PUT, POST, MERGE, DELETE, need to add content-length to header.</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;PUT&#39;</span><span class="p">,</span> <span class="s">&#39;POST&#39;</span><span class="p">,</span> <span class="s">&#39;MERGE&#39;</span><span class="p">,</span> <span class="s">&#39;DELETE&#39;</span><span class="p">]:</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">))))</span>
+
+    <span class="c"># append addtional headers base on the service</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;x-ms-version&#39;</span><span class="p">,</span> <span class="n">X_MS_VERSION</span><span class="p">))</span>
+
+    <span class="c"># append x-ms-meta name, values to header</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s">&#39;x-ms-meta-name-values&#39;</span> <span class="ow">in</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">meta_name</span><span class="p">,</span> <span class="n">meta_value</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;x-ms-meta-&#39;</span> <span class="o">+</span> <span class="n">meta_name</span><span class="p">,</span> <span class="n">meta_value</span><span class="p">))</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">remove</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+            <span class="k">break</span>
+    <span class="k">return</span> <span class="n">request</span>
+
+
+<span class="k">def</span> <span class="nf">_update_storage_blob_header</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">account_name</span><span class="p">,</span> <span class="n">account_key</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; add additional headers for storage blob request. &#39;&#39;&#39;</span>
+
+    <span class="n">request</span> <span class="o">=</span> <span class="n">_update_storage_header</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+    <span class="n">current_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%a, </span><span class="si">%d</span><span class="s"> %b %Y %H:%M:%S GMT&#39;</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;x-ms-date&#39;</span><span class="p">,</span> <span class="n">current_time</span><span class="p">))</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;application/octet-stream Charset=UTF-8&#39;</span><span class="p">))</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Authorization&#39;</span><span class="p">,</span>
+                            <span class="n">_sign_storage_blob_request</span><span class="p">(</span><span class="n">request</span><span class="p">,</span>
+                                                       <span class="n">account_name</span><span class="p">,</span>
+                                                       <span class="n">account_key</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span>
+
+
+<span class="k">def</span> <span class="nf">_update_storage_queue_header</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">account_name</span><span class="p">,</span> <span class="n">account_key</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; add additional headers for storage queue request. &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">_update_storage_blob_header</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">account_name</span><span class="p">,</span> <span class="n">account_key</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_update_storage_table_header</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; add additional headers for storage table request. &#39;&#39;&#39;</span>
+
+    <span class="n">request</span> <span class="o">=</span> <span class="n">_update_storage_header</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;content-type&#39;</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;application/atom+xml&#39;</span><span class="p">))</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;DataServiceVersion&#39;</span><span class="p">,</span> <span class="s">&#39;2.0;NetFx&#39;</span><span class="p">))</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;MaxDataServiceVersion&#39;</span><span class="p">,</span> <span class="s">&#39;2.0;NetFx&#39;</span><span class="p">))</span>
+    <span class="n">current_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%a, </span><span class="si">%d</span><span class="s"> %b %Y %H:%M:%S GMT&#39;</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;x-ms-date&#39;</span><span class="p">,</span> <span class="n">current_time</span><span class="p">))</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Date&#39;</span><span class="p">,</span> <span class="n">current_time</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span>
+
+
+<span class="k">def</span> <span class="nf">_sign_storage_blob_request</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">account_name</span><span class="p">,</span> <span class="n">account_key</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns the signed string for blob request which is used to set</span>
+<span class="sd">    Authorization header. This is also used to sign queue request.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">uri_path</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c"># method to sign</span>
+    <span class="n">string_to_sign</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+
+    <span class="c"># get headers to sign</span>
+    <span class="n">headers_to_sign</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s">&#39;content-encoding&#39;</span><span class="p">,</span> <span class="s">&#39;content-language&#39;</span><span class="p">,</span> <span class="s">&#39;content-length&#39;</span><span class="p">,</span>
+        <span class="s">&#39;content-md5&#39;</span><span class="p">,</span> <span class="s">&#39;content-type&#39;</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;if-modified-since&#39;</span><span class="p">,</span>
+        <span class="s">&#39;if-match&#39;</span><span class="p">,</span> <span class="s">&#39;if-none-match&#39;</span><span class="p">,</span> <span class="s">&#39;if-unmodified-since&#39;</span><span class="p">,</span> <span class="s">&#39;range&#39;</span><span class="p">]</span>
+
+    <span class="n">request_header_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">value</span><span class="p">)</span>
+                               <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span> <span class="k">if</span> <span class="n">value</span><span class="p">)</span>
+    <span class="n">string_to_sign</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">request_header_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+                                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">headers_to_sign</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+
+    <span class="c"># get x-ms header to sign</span>
+    <span class="n">x_ms_headers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s">&#39;x-ms&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">x_ms_headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">value</span><span class="p">))</span>
+    <span class="n">x_ms_headers</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">x_ms_headers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">string_to_sign</span> <span class="o">+=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;:&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">])</span>
+
+    <span class="c"># get account_name and uri path to sign</span>
+    <span class="n">string_to_sign</span> <span class="o">+=</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">account_name</span> <span class="o">+</span> <span class="n">uri_path</span>
+
+    <span class="c"># get query string to sign if it is not table service</span>
+    <span class="n">query_to_sign</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">query</span>
+    <span class="n">query_to_sign</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+    <span class="n">current_name</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">query_to_sign</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">current_name</span> <span class="o">!=</span> <span class="n">name</span><span class="p">:</span>
+                <span class="n">string_to_sign</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&#39;:&#39;</span> <span class="o">+</span> <span class="n">value</span>
+                <span class="n">current_name</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">string_to_sign</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="s">&#39;,&#39;</span> <span class="o">+</span> <span class="n">value</span>
+
+    <span class="c"># sign the request</span>
+    <span class="n">auth_string</span> <span class="o">=</span> <span class="s">&#39;SharedKey &#39;</span> <span class="o">+</span> <span class="n">account_name</span> <span class="o">+</span> <span class="s">&#39;:&#39;</span> <span class="o">+</span> \
+        <span class="n">_sign_string</span><span class="p">(</span><span class="n">account_key</span><span class="p">,</span> <span class="n">string_to_sign</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">auth_string</span>
+
+
+<span class="k">def</span> <span class="nf">_sign_storage_table_request</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">account_name</span><span class="p">,</span> <span class="n">account_key</span><span class="p">):</span>
+    <span class="n">uri_path</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">string_to_sign</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+    <span class="n">headers_to_sign</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;content-md5&#39;</span><span class="p">,</span> <span class="s">&#39;content-type&#39;</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">]</span>
+    <span class="n">request_header_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">value</span><span class="p">)</span>
+                               <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span> <span class="k">if</span> <span class="n">value</span><span class="p">)</span>
+    <span class="n">string_to_sign</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">request_header_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+                                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">headers_to_sign</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+
+    <span class="c"># get account_name and uri path to sign</span>
+    <span class="n">string_to_sign</span> <span class="o">+=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">account_name</span><span class="p">,</span> <span class="n">uri_path</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;comp&#39;</span> <span class="ow">and</span> <span class="n">uri_path</span> <span class="o">==</span> <span class="s">&#39;/&#39;</span><span class="p">:</span>
+            <span class="n">string_to_sign</span> <span class="o">+=</span> <span class="s">&#39;?comp=&#39;</span> <span class="o">+</span> <span class="n">value</span>
+            <span class="k">break</span>
+
+    <span class="c"># sign the request</span>
+    <span class="n">auth_string</span> <span class="o">=</span> <span class="s">&#39;SharedKey &#39;</span> <span class="o">+</span> <span class="n">account_name</span> <span class="o">+</span> <span class="s">&#39;:&#39;</span> <span class="o">+</span> \
+        <span class="n">_sign_string</span><span class="p">(</span><span class="n">account_key</span><span class="p">,</span> <span class="n">string_to_sign</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">auth_string</span>
+
+
+<span class="k">def</span> <span class="nf">_to_python_bool</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;true&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span>
+
+
+<span class="k">def</span> <span class="nf">_to_entity_int</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">int_max</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">&lt;&lt;</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">data</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">int_max</span><span class="p">)</span> <span class="ow">or</span> <span class="n">data</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">int_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;Edm.Int64&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;Edm.Int32&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_to_entity_bool</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;Edm.Boolean&#39;</span><span class="p">,</span> <span class="s">&#39;true&#39;</span>
+    <span class="k">return</span> <span class="s">&#39;Edm.Boolean&#39;</span><span class="p">,</span> <span class="s">&#39;false&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">_to_entity_datetime</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="c"># Azure expects the date value passed in to be UTC.</span>
+    <span class="c"># Azure will always return values as UTC.</span>
+    <span class="c"># If a date is passed in without timezone info, it is assumed to be UTC.</span>
+    <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">tzutc</span><span class="p">())</span>
+    <span class="k">return</span> <span class="s">&#39;Edm.DateTime&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">T%H:%M:%SZ&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_to_entity_float</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&#39;Edm.Double&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_to_entity_property</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;Edm.Binary&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">_encode_base64</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_to_entity_none</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+
+
+<span class="k">def</span> <span class="nf">_to_entity_str</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&#39;Edm.String&#39;</span><span class="p">,</span> <span class="n">value</span>
+
+
+<span class="c"># Tables of conversions to and from entity types.  We support specific</span>
+<span class="c"># datatypes, and beyond that the user can use an EntityProperty to get</span>
+<span class="c"># custom data type support.</span>
+
+<span class="k">def</span> <span class="nf">_from_entity_binary</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">EntityProperty</span><span class="p">(</span><span class="s">&#39;Edm.Binary&#39;</span><span class="p">,</span> <span class="n">_decode_base64_to_bytes</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_from_entity_int</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_from_entity_datetime</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="c"># Note that Azure always returns UTC datetime, and dateutil parser</span>
+    <span class="c"># will set the tzinfo on the date it returns</span>
+    <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+<span class="n">_ENTITY_TO_PYTHON_CONVERSIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;Edm.Binary&#39;</span><span class="p">:</span> <span class="n">_from_entity_binary</span><span class="p">,</span>
+    <span class="s">&#39;Edm.Int32&#39;</span><span class="p">:</span> <span class="n">_from_entity_int</span><span class="p">,</span>
+    <span class="s">&#39;Edm.Int64&#39;</span><span class="p">:</span> <span class="n">_from_entity_int</span><span class="p">,</span>
+    <span class="s">&#39;Edm.Double&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="s">&#39;Edm.Boolean&#39;</span><span class="p">:</span> <span class="n">_to_python_bool</span><span class="p">,</span>
+    <span class="s">&#39;Edm.DateTime&#39;</span><span class="p">:</span> <span class="n">_from_entity_datetime</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c"># Conversion from Python type to a function which returns a tuple of the</span>
+<span class="c"># type string and content string.</span>
+<span class="n">_PYTHON_TO_ENTITY_CONVERSIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nb">int</span><span class="p">:</span> <span class="n">_to_entity_int</span><span class="p">,</span>
+    <span class="nb">bool</span><span class="p">:</span> <span class="n">_to_entity_bool</span><span class="p">,</span>
+    <span class="n">datetime</span><span class="p">:</span> <span class="n">_to_entity_datetime</span><span class="p">,</span>
+    <span class="nb">float</span><span class="p">:</span> <span class="n">_to_entity_float</span><span class="p">,</span>
+    <span class="n">EntityProperty</span><span class="p">:</span> <span class="n">_to_entity_property</span><span class="p">,</span>
+    <span class="nb">str</span><span class="p">:</span> <span class="n">_to_entity_str</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,):</span>
+    <span class="n">_PYTHON_TO_ENTITY_CONVERSIONS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+        <span class="nb">long</span><span class="p">:</span> <span class="n">_to_entity_int</span><span class="p">,</span>
+        <span class="n">types</span><span class="o">.</span><span class="n">NoneType</span><span class="p">:</span> <span class="n">_to_entity_none</span><span class="p">,</span>
+        <span class="nb">unicode</span><span class="p">:</span> <span class="n">_to_entity_str</span><span class="p">,</span>
+    <span class="p">})</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_entity_to_xml</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Converts an entity object to xml to send.</span>
+
+<span class="sd">    The entity format is:</span>
+<span class="sd">    &lt;entry xmlns:d=&quot;http://schemas.microsoft.com/ado/2007/08/dataservices&quot; xmlns:m=&quot;http://schemas.microsoft.com/ado/2007/08/dataservices/metadata&quot; xmlns=&quot;http://www.w3.org/2005/Atom&quot;&gt;</span>
+<span class="sd">      &lt;title /&gt;</span>
+<span class="sd">      &lt;updated&gt;2008-09-18T23:46:19.3857256Z&lt;/updated&gt;</span>
+<span class="sd">      &lt;author&gt;</span>
+<span class="sd">        &lt;name /&gt;</span>
+<span class="sd">      &lt;/author&gt;</span>
+<span class="sd">      &lt;id /&gt;</span>
+<span class="sd">      &lt;content type=&quot;application/xml&quot;&gt;</span>
+<span class="sd">        &lt;m:properties&gt;</span>
+<span class="sd">          &lt;d:Address&gt;Mountain View&lt;/d:Address&gt;</span>
+<span class="sd">          &lt;d:Age m:type=&quot;Edm.Int32&quot;&gt;23&lt;/d:Age&gt;</span>
+<span class="sd">          &lt;d:AmountDue m:type=&quot;Edm.Double&quot;&gt;200.23&lt;/d:AmountDue&gt;</span>
+<span class="sd">          &lt;d:BinaryData m:type=&quot;Edm.Binary&quot; m:null=&quot;true&quot; /&gt;</span>
+<span class="sd">          &lt;d:CustomerCode m:type=&quot;Edm.Guid&quot;&gt;c9da6455-213d-42c9-9a79-3e9149a57833&lt;/d:CustomerCode&gt;</span>
+<span class="sd">          &lt;d:CustomerSince m:type=&quot;Edm.DateTime&quot;&gt;2008-07-10T00:00:00&lt;/d:CustomerSince&gt;</span>
+<span class="sd">          &lt;d:IsActive m:type=&quot;Edm.Boolean&quot;&gt;true&lt;/d:IsActive&gt;</span>
+<span class="sd">          &lt;d:NumOfOrders m:type=&quot;Edm.Int64&quot;&gt;255&lt;/d:NumOfOrders&gt;</span>
+<span class="sd">          &lt;d:PartitionKey&gt;mypartitionkey&lt;/d:PartitionKey&gt;</span>
+<span class="sd">          &lt;d:RowKey&gt;myrowkey1&lt;/d:RowKey&gt;</span>
+<span class="sd">          &lt;d:Timestamp m:type=&quot;Edm.DateTime&quot;&gt;0001-01-01T00:00:00&lt;/d:Timestamp&gt;</span>
+<span class="sd">        &lt;/m:properties&gt;</span>
+<span class="sd">      &lt;/content&gt;</span>
+<span class="sd">    &lt;/entry&gt;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c"># construct the entity body included in &lt;m:properties&gt; and &lt;/m:properties&gt;</span>
+    <span class="n">entity_body</span> <span class="o">=</span> <span class="s">&#39;&lt;m:properties xml:space=&quot;preserve&quot;&gt;{properties}&lt;/m:properties&gt;&#39;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">WindowsAzureData</span><span class="p">):</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+    <span class="n">properties_str</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+    <span class="c"># set properties type for types we know if value has no type info.</span>
+    <span class="c"># if value has type info, then set the type to value.type</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">mtype</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="n">conv</span> <span class="o">=</span> <span class="n">_PYTHON_TO_ENTITY_CONVERSIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">conv</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,)</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">conv</span> <span class="o">=</span> <span class="n">_to_entity_none</span>
+        <span class="k">if</span> <span class="n">conv</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WindowsAzureError</span><span class="p">(</span>
+                <span class="n">_ERROR_CANNOT_SERIALIZE_VALUE_TO_ENTITY</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+
+        <span class="n">mtype</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">conv</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="c"># form the property node</span>
+        <span class="n">properties_str</span> <span class="o">+=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s">&#39;&lt;d:&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">properties_str</span> <span class="o">+=</span> <span class="s">&#39; m:null=&quot;true&quot; /&gt;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">mtype</span><span class="p">:</span>
+                <span class="n">properties_str</span> <span class="o">+=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s">&#39; m:type=&quot;&#39;</span><span class="p">,</span> <span class="n">mtype</span><span class="p">,</span> <span class="s">&#39;&quot;&#39;</span><span class="p">])</span>
+            <span class="n">properties_str</span> <span class="o">+=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s">&#39;&gt;&#39;</span><span class="p">,</span>
+                                      <span class="n">xml_escape</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="s">&#39;&lt;/d:&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s">&#39;&gt;&#39;</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">properties_str</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
+            <span class="n">properties_str</span> <span class="o">=</span> <span class="n">properties_str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+    <span class="c"># generate the entity_body</span>
+    <span class="n">entity_body</span> <span class="o">=</span> <span class="n">entity_body</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">properties</span><span class="o">=</span><span class="n">properties_str</span><span class="p">)</span>
+    <span class="n">xmlstr</span> <span class="o">=</span> <span class="n">_create_entry</span><span class="p">(</span><span class="n">entity_body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">xmlstr</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_table_to_xml</span><span class="p">(</span><span class="n">table_name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create xml to send for a given table name. Since xml format for table is</span>
+<span class="sd">    the same as entity and the only difference is that table has only one</span>
+<span class="sd">    property &#39;TableName&#39;, so we just call _convert_entity_to_xml.</span>
+
+<span class="sd">    table_name: the name of the table</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">_convert_entity_to_xml</span><span class="p">({</span><span class="s">&#39;TableName&#39;</span><span class="p">:</span> <span class="n">table_name</span><span class="p">})</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_block_list_to_xml</span><span class="p">(</span><span class="n">block_id_list</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Convert a block list to xml to send.</span>
+
+<span class="sd">    block_id_list:</span>
+<span class="sd">        a str list containing the block ids that are used in put_block_list.</span>
+<span class="sd">    Only get block from latest blocks.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">block_id_list</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;&#39;</span>
+    <span class="n">xml</span> <span class="o">=</span> <span class="s">&#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;BlockList&gt;&#39;</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">block_id_list</span><span class="p">:</span>
+        <span class="n">xml</span> <span class="o">+=</span> <span class="s">&#39;&lt;Latest&gt;{0}&lt;/Latest&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_encode_base64</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">xml</span> <span class="o">+</span> <span class="s">&#39;&lt;/BlockList&gt;&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">_create_blob_result</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="n">blob_properties</span> <span class="o">=</span> <span class="n">_parse_response_for_dict</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">BlobResult</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">blob_properties</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_block_etree_element_to_blob_block</span><span class="p">(</span><span class="n">block_element</span><span class="p">):</span>
+    <span class="n">block_id</span> <span class="o">=</span> <span class="n">_decode_base64_to_text</span><span class="p">(</span><span class="n">block_element</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s">&#39;./Name&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
+    <span class="n">block_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">block_element</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s">&#39;./Size&#39;</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">BlobBlock</span><span class="p">(</span><span class="n">block_id</span><span class="p">,</span> <span class="n">block_size</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_response_to_block_list</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Converts xml response to block list class.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">block_list</span> <span class="o">=</span> <span class="n">BlobBlockList</span><span class="p">()</span>
+
+    <span class="n">list_element</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">block_element</span> <span class="ow">in</span> <span class="n">list_element</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;./CommittedBlocks/Block&#39;</span><span class="p">):</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">_convert_block_etree_element_to_blob_block</span><span class="p">(</span><span class="n">block_element</span><span class="p">)</span>
+        <span class="n">block_list</span><span class="o">.</span><span class="n">committed_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">block_element</span> <span class="ow">in</span> <span class="n">list_element</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;./UncommittedBlocks/Block&#39;</span><span class="p">):</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">_convert_block_etree_element_to_blob_block</span><span class="p">(</span><span class="n">block_element</span><span class="p">)</span>
+        <span class="n">block_list</span><span class="o">.</span><span class="n">uncommitted_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">block_list</span>
+
+
+<span class="k">def</span> <span class="nf">_remove_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">colon</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">colon</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">name</span><span class="p">[</span><span class="n">colon</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">name</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_response_to_entity</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_convert_etree_element_to_entity</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_etree_element_to_entity</span><span class="p">(</span><span class="n">entry_element</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Convert xml response to entity.</span>
+
+<span class="sd">    The format of entity:</span>
+<span class="sd">    &lt;entry xmlns:d=&quot;http://schemas.microsoft.com/ado/2007/08/dataservices&quot; xmlns:m=&quot;http://schemas.microsoft.com/ado/2007/08/dataservices/metadata&quot; xmlns=&quot;http://www.w3.org/2005/Atom&quot;&gt;</span>
+<span class="sd">      &lt;title /&gt;</span>
+<span class="sd">      &lt;updated&gt;2008-09-18T23:46:19.3857256Z&lt;/updated&gt;</span>
+<span class="sd">      &lt;author&gt;</span>
+<span class="sd">        &lt;name /&gt;</span>
+<span class="sd">      &lt;/author&gt;</span>
+<span class="sd">      &lt;id /&gt;</span>
+<span class="sd">      &lt;content type=&quot;application/xml&quot;&gt;</span>
+<span class="sd">        &lt;m:properties&gt;</span>
+<span class="sd">          &lt;d:Address&gt;Mountain View&lt;/d:Address&gt;</span>
+<span class="sd">          &lt;d:Age m:type=&quot;Edm.Int32&quot;&gt;23&lt;/d:Age&gt;</span>
+<span class="sd">          &lt;d:AmountDue m:type=&quot;Edm.Double&quot;&gt;200.23&lt;/d:AmountDue&gt;</span>
+<span class="sd">          &lt;d:BinaryData m:type=&quot;Edm.Binary&quot; m:null=&quot;true&quot; /&gt;</span>
+<span class="sd">          &lt;d:CustomerCode m:type=&quot;Edm.Guid&quot;&gt;c9da6455-213d-42c9-9a79-3e9149a57833&lt;/d:CustomerCode&gt;</span>
+<span class="sd">          &lt;d:CustomerSince m:type=&quot;Edm.DateTime&quot;&gt;2008-07-10T00:00:00&lt;/d:CustomerSince&gt;</span>
+<span class="sd">          &lt;d:IsActive m:type=&quot;Edm.Boolean&quot;&gt;true&lt;/d:IsActive&gt;</span>
+<span class="sd">          &lt;d:NumOfOrders m:type=&quot;Edm.Int64&quot;&gt;255&lt;/d:NumOfOrders&gt;</span>
+<span class="sd">          &lt;d:PartitionKey&gt;mypartitionkey&lt;/d:PartitionKey&gt;</span>
+<span class="sd">          &lt;d:RowKey&gt;myrowkey1&lt;/d:RowKey&gt;</span>
+<span class="sd">          &lt;d:Timestamp m:type=&quot;Edm.DateTime&quot;&gt;0001-01-01T00:00:00&lt;/d:Timestamp&gt;</span>
+<span class="sd">        &lt;/m:properties&gt;</span>
+<span class="sd">      &lt;/content&gt;</span>
+<span class="sd">    &lt;/entry&gt;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">entity</span> <span class="o">=</span> <span class="n">Entity</span><span class="p">()</span>
+
+    <span class="n">properties</span> <span class="o">=</span> <span class="n">entry_element</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;./atom:content/m:properties&#39;</span><span class="p">,</span> <span class="n">_etree_entity_feed_namespaces</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prop</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">_get_etree_tag_name_without_ns</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">text</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span>
+            <span class="n">mtype</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_make_etree_ns_attr_name</span><span class="p">(</span><span class="n">_etree_entity_feed_namespaces</span><span class="p">[</span><span class="s">&#39;m&#39;</span><span class="p">],</span> <span class="s">&#39;type&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">isnull</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_make_etree_ns_attr_name</span><span class="p">(</span><span class="n">_etree_entity_feed_namespaces</span><span class="p">[</span><span class="s">&#39;m&#39;</span><span class="p">],</span> <span class="s">&#39;null&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+
+            <span class="c"># if not isnull and no type info, then it is a string and we just</span>
+            <span class="c"># need the str type to hold the property.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">isnull</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">mtype</span><span class="p">:</span>
+                <span class="n">_set_entity_attr</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">isnull</span> <span class="o">==</span> <span class="s">&#39;true&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">mtype</span><span class="p">:</span>
+                    <span class="nb">property</span> <span class="o">=</span> <span class="n">EntityProperty</span><span class="p">(</span><span class="n">mtype</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">property</span> <span class="o">=</span> <span class="n">EntityProperty</span><span class="p">(</span><span class="s">&#39;Edm.String&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c"># need an object to hold the property</span>
+                <span class="n">conv</span> <span class="o">=</span> <span class="n">_ENTITY_TO_PYTHON_CONVERSIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mtype</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">conv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="nb">property</span> <span class="o">=</span> <span class="n">conv</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">property</span> <span class="o">=</span> <span class="n">EntityProperty</span><span class="p">(</span><span class="n">mtype</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="n">_set_entity_attr</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">property</span><span class="p">)</span>
+
+
+    <span class="c"># extract id, updated and name value from feed entry and set them of</span>
+    <span class="c"># rule.</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">get_entry_properties_from_element</span><span class="p">(</span>
+        <span class="n">entry_element</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;etag&#39;</span><span class="p">]:</span>
+            <span class="n">_set_entity_attr</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">entity</span>
+
+
+<span class="k">def</span> <span class="nf">_set_entity_attr</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">UnicodeEncodeError</span><span class="p">:</span>
+        <span class="c"># Python 2 doesn&#39;t support unicode attribute names, so we&#39;ll</span>
+        <span class="c"># add them and access them directly through the dictionary</span>
+        <span class="n">entity</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_etree_element_to_table</span><span class="p">(</span><span class="n">entry_element</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Converts the xml element to table class.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">()</span>
+    <span class="n">name_element</span> <span class="o">=</span> <span class="n">entry_element</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;./atom:content/m:properties/d:TableName&#39;</span><span class="p">,</span> <span class="n">_etree_entity_feed_namespaces</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name_element</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="k">for</span> <span class="n">name_element</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">get_entry_properties_from_element</span><span class="p">(</span>
+        <span class="n">entry_element</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">name_element</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">table</span>
+
+
+<span class="k">def</span> <span class="nf">_storage_error_handler</span><span class="p">(</span><span class="n">http_error</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Simple error handler for storage service. &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">_general_error_handler</span><span class="p">(</span><span class="n">http_error</span><span class="p">)</span>
+
+<span class="c"># make these available just from storage.</span>
+<span class="kn">from</span> <span class="nn">azure.storage.blobservice</span> <span class="kn">import</span> <span class="n">BlobService</span>
+<span class="kn">from</span> <span class="nn">azure.storage.queueservice</span> <span class="kn">import</span> <span class="n">QueueService</span>
+<span class="kn">from</span> <span class="nn">azure.storage.tableservice</span> <span class="kn">import</span> <span class="n">TableService</span>
+<span class="kn">from</span> <span class="nn">azure.storage.cloudstorageaccount</span> <span class="kn">import</span> <span class="n">CloudStorageAccount</span>
+<span class="kn">from</span> <span class="nn">azure.storage.sharedaccesssignature</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SharedAccessSignature</span><span class="p">,</span>
+    <span class="n">SharedAccessPolicy</span><span class="p">,</span>
+    <span class="n">Permission</span><span class="p">,</span>
+    <span class="n">WebResource</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../azure.html" >azure</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

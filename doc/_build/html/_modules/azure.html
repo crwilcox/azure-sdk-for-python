@@ -1,0 +1,1076 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for azure</h1><div class="highlight"><pre>
+<span class="c">#-------------------------------------------------------------------------</span>
+<span class="c"># Copyright (c) Microsoft.  All rights reserved.</span>
+<span class="c">#</span>
+<span class="c"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c"># you may not use this file except in compliance with the License.</span>
+<span class="c"># You may obtain a copy of the License at</span>
+<span class="c">#   http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c">#</span>
+<span class="c"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c"># See the License for the specific language governing permissions and</span>
+<span class="c"># limitations under the License.</span>
+<span class="c">#--------------------------------------------------------------------------</span>
+<span class="kn">import</span> <span class="nn">ast</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">hmac</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,):</span>
+    <span class="kn">from</span> <span class="nn">cStringIO</span> <span class="kn">import</span> <span class="n">StringIO</span>
+    <span class="kn">from</span> <span class="nn">urllib2</span> <span class="kn">import</span> <span class="n">quote</span> <span class="k">as</span> <span class="n">url_quote</span>
+    <span class="kn">from</span> <span class="nn">urllib2</span> <span class="kn">import</span> <span class="n">unquote</span> <span class="k">as</span> <span class="n">url_unquote</span>
+    <span class="n">_strtype</span> <span class="o">=</span> <span class="nb">basestring</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">StringIO</span>
+    <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">quote</span> <span class="k">as</span> <span class="n">url_quote</span>
+    <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">unquote</span> <span class="k">as</span> <span class="n">url_unquote</span>
+    <span class="n">_strtype</span> <span class="o">=</span> <span class="nb">str</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">xml.sax.saxutils</span> <span class="kn">import</span> <span class="n">escape</span> <span class="k">as</span> <span class="n">xml_escape</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">xml.etree</span> <span class="kn">import</span> <span class="n">cElementTree</span> <span class="k">as</span> <span class="n">ETree</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">xml.etree</span> <span class="kn">import</span> <span class="n">ElementTree</span> <span class="k">as</span> <span class="n">ETree</span>
+
+<span class="c">#--------------------------------------------------------------------------</span>
+<span class="c"># constants</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&#39;Microsoft Corp. &lt;ptvshelp@microsoft.com&gt;&#39;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&#39;0.9.0&#39;</span>
+
+<span class="c"># Live ServiceClient URLs</span>
+<span class="n">BLOB_SERVICE_HOST_BASE</span> <span class="o">=</span> <span class="s">&#39;.blob.core.windows.net&#39;</span>
+<span class="n">QUEUE_SERVICE_HOST_BASE</span> <span class="o">=</span> <span class="s">&#39;.queue.core.windows.net&#39;</span>
+<span class="n">TABLE_SERVICE_HOST_BASE</span> <span class="o">=</span> <span class="s">&#39;.table.core.windows.net&#39;</span>
+<span class="n">SERVICE_BUS_HOST_BASE</span> <span class="o">=</span> <span class="s">&#39;.servicebus.windows.net&#39;</span>
+<span class="n">MANAGEMENT_HOST</span> <span class="o">=</span> <span class="s">&#39;management.core.windows.net&#39;</span>
+
+<span class="c"># Development ServiceClient URLs</span>
+<span class="n">DEV_BLOB_HOST</span> <span class="o">=</span> <span class="s">&#39;127.0.0.1:10000&#39;</span>
+<span class="n">DEV_QUEUE_HOST</span> <span class="o">=</span> <span class="s">&#39;127.0.0.1:10001&#39;</span>
+<span class="n">DEV_TABLE_HOST</span> <span class="o">=</span> <span class="s">&#39;127.0.0.1:10002&#39;</span>
+
+<span class="c"># Default credentials for Development Storage Service</span>
+<span class="n">DEV_ACCOUNT_NAME</span> <span class="o">=</span> <span class="s">&#39;devstoreaccount1&#39;</span>
+<span class="n">DEV_ACCOUNT_KEY</span> <span class="o">=</span> <span class="s">&#39;Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==&#39;</span>
+
+<span class="c"># All of our error messages</span>
+<span class="n">_ERROR_CANNOT_FIND_PARTITION_KEY</span> <span class="o">=</span> <span class="s">&#39;Cannot find partition key in request.&#39;</span>
+<span class="n">_ERROR_CANNOT_FIND_ROW_KEY</span> <span class="o">=</span> <span class="s">&#39;Cannot find row key in request.&#39;</span>
+<span class="n">_ERROR_INCORRECT_TABLE_IN_BATCH</span> <span class="o">=</span> \
+    <span class="s">&#39;Table should be the same in a batch operations&#39;</span>
+<span class="n">_ERROR_INCORRECT_PARTITION_KEY_IN_BATCH</span> <span class="o">=</span> \
+    <span class="s">&#39;Partition Key should be the same in a batch operations&#39;</span>
+<span class="n">_ERROR_DUPLICATE_ROW_KEY_IN_BATCH</span> <span class="o">=</span> \
+    <span class="s">&#39;Row Keys should not be the same in a batch operations&#39;</span>
+<span class="n">_ERROR_BATCH_COMMIT_FAIL</span> <span class="o">=</span> <span class="s">&#39;Batch Commit Fail&#39;</span>
+<span class="n">_ERROR_MESSAGE_NOT_PEEK_LOCKED_ON_DELETE</span> <span class="o">=</span> \
+    <span class="s">&#39;Message is not peek locked and cannot be deleted.&#39;</span>
+<span class="n">_ERROR_MESSAGE_NOT_PEEK_LOCKED_ON_UNLOCK</span> <span class="o">=</span> \
+    <span class="s">&#39;Message is not peek locked and cannot be unlocked.&#39;</span>
+<span class="n">_ERROR_EVENT_HUB_NOT_FOUND</span> <span class="o">=</span> <span class="s">&#39;Event hub was not found&#39;</span>
+<span class="n">_ERROR_QUEUE_NOT_FOUND</span> <span class="o">=</span> <span class="s">&#39;Queue was not found&#39;</span>
+<span class="n">_ERROR_TOPIC_NOT_FOUND</span> <span class="o">=</span> <span class="s">&#39;Topic was not found&#39;</span>
+<span class="n">_ERROR_CONFLICT</span> <span class="o">=</span> <span class="s">&#39;Conflict ({0})&#39;</span>
+<span class="n">_ERROR_NOT_FOUND</span> <span class="o">=</span> <span class="s">&#39;Not found ({0})&#39;</span>
+<span class="n">_ERROR_UNKNOWN</span> <span class="o">=</span> <span class="s">&#39;Unknown error ({0})&#39;</span>
+<span class="n">_ERROR_SERVICEBUS_MISSING_INFO</span> <span class="o">=</span> \
+    <span class="s">&#39;You need to provide servicebus namespace, access key and Issuer&#39;</span>
+<span class="n">_ERROR_STORAGE_MISSING_INFO</span> <span class="o">=</span> \
+    <span class="s">&#39;You need to provide both account name and access key&#39;</span>
+<span class="n">_ERROR_ACCESS_POLICY</span> <span class="o">=</span> \
+    <span class="s">&#39;share_access_policy must be either SignedIdentifier or AccessPolicy &#39;</span> <span class="o">+</span> \
+    <span class="s">&#39;instance&#39;</span>
+<span class="n">_WARNING_VALUE_SHOULD_BE_BYTES</span> <span class="o">=</span> \
+    <span class="s">&#39;Warning: {0} must be bytes data type. It will be converted &#39;</span> <span class="o">+</span> \
+    <span class="s">&#39;automatically, with utf-8 text encoding.&#39;</span>
+<span class="n">_ERROR_VALUE_SHOULD_BE_BYTES</span> <span class="o">=</span> <span class="s">&#39;{0} should be of type bytes.&#39;</span>
+<span class="n">_ERROR_VALUE_NONE</span> <span class="o">=</span> <span class="s">&#39;{0} should not be None.&#39;</span>
+<span class="n">_ERROR_VALUE_NEGATIVE</span> <span class="o">=</span> <span class="s">&#39;{0} should not be negative.&#39;</span>
+<span class="n">_ERROR_CANNOT_SERIALIZE_VALUE_TO_ENTITY</span> <span class="o">=</span> \
+    <span class="s">&#39;Cannot serialize the specified value ({0}) to an entity.  Please use &#39;</span> <span class="o">+</span> \
+    <span class="s">&#39;an EntityProperty (which can specify custom types), int, str, bool, &#39;</span> <span class="o">+</span> \
+    <span class="s">&#39;or datetime.&#39;</span>
+<span class="n">_ERROR_PAGE_BLOB_SIZE_ALIGNMENT</span> <span class="o">=</span> \
+    <span class="s">&#39;Invalid page blob size: {0}. &#39;</span> <span class="o">+</span> \
+    <span class="s">&#39;The size must be aligned to a 512-byte boundary.&#39;</span>
+<span class="n">_ERROR_ASYNC_OP_FAILURE</span> <span class="o">=</span> <span class="s">&#39;Asynchronous operation did not succeed.&#39;</span>
+<span class="n">_ERROR_ASYNC_OP_TIMEOUT</span> <span class="o">=</span> <span class="s">&#39;Timed out waiting for async operation to complete.&#39;</span>
+
+<span class="n">_USER_AGENT_STRING</span> <span class="o">=</span> <span class="s">&#39;pyazure/&#39;</span> <span class="o">+</span> <span class="n">__version__</span>
+
+<span class="n">METADATA_NS</span> <span class="o">=</span> <span class="s">&#39;http://schemas.microsoft.com/ado/2007/08/dataservices/metadata&#39;</span>
+
+
+<div class="viewcode-block" id="WindowsAzureData"><a class="viewcode-back" href="../api/azure.html#azure.WindowsAzureData">[docs]</a><span class="k">class</span> <span class="nc">WindowsAzureData</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; This is the base of data class.</span>
+<span class="sd">    It is only used to check whether it is instance or not. &#39;&#39;&#39;</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="WindowsAzureError"><a class="viewcode-back" href="../api/azure.html#azure.WindowsAzureError">[docs]</a><span class="k">class</span> <span class="nc">WindowsAzureError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39; WindowsAzure Exception base class. &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WindowsAzureError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="WindowsAzureConflictError"><a class="viewcode-back" href="../api/azure.html#azure.WindowsAzureConflictError">[docs]</a><span class="k">class</span> <span class="nc">WindowsAzureConflictError</span><span class="p">(</span><span class="n">WindowsAzureError</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;Indicates that the resource could not be created because it already</span>
+<span class="sd">    exists&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WindowsAzureConflictError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="WindowsAzureMissingResourceError"><a class="viewcode-back" href="../api/azure.html#azure.WindowsAzureMissingResourceError">[docs]</a><span class="k">class</span> <span class="nc">WindowsAzureMissingResourceError</span><span class="p">(</span><span class="n">WindowsAzureError</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;Indicates that a request for a request for a resource (queue, table,</span>
+<span class="sd">    container, etc...) failed because the specified resource does not exist&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WindowsAzureMissingResourceError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="WindowsAzureBatchOperationError"><a class="viewcode-back" href="../api/azure.html#azure.WindowsAzureBatchOperationError">[docs]</a><span class="k">class</span> <span class="nc">WindowsAzureBatchOperationError</span><span class="p">(</span><span class="n">WindowsAzureError</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;Indicates that a batch operation failed&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WindowsAzureBatchOperationError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+
+</div>
+<div class="viewcode-block" id="WindowsAzureAsyncOperationError"><a class="viewcode-back" href="../api/azure.html#azure.WindowsAzureAsyncOperationError">[docs]</a><span class="k">class</span> <span class="nc">WindowsAzureAsyncOperationError</span><span class="p">(</span><span class="n">WindowsAzureError</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;Indicates that an async operation failed&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WindowsAzureAsyncOperationError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">result</span>
+
+</div>
+<div class="viewcode-block" id="Feed"><a class="viewcode-back" href="../api/azure.html#azure.Feed">[docs]</a><span class="k">class</span> <span class="nc">Feed</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+</div>
+<span class="k">class</span> <span class="nc">_Base64String</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="HeaderDict"><a class="viewcode-back" href="../api/azure.html#azure.HeaderDict">[docs]</a><span class="k">class</span> <span class="nc">HeaderDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">HeaderDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_encode_base64</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">_unicode_type</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">encoded</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">encoded</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_decode_base64_to_bytes</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">_unicode_type</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_decode_base64_to_text</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">decoded_bytes</span> <span class="o">=</span> <span class="n">_decode_base64_to_bytes</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">decoded_bytes</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+
+<span class="n">_etree_entity_feed_namespaces</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;atom&#39;</span><span class="p">:</span> <span class="s">&#39;http://www.w3.org/2005/Atom&#39;</span><span class="p">,</span>
+    <span class="s">&#39;m&#39;</span><span class="p">:</span> <span class="s">&#39;http://schemas.microsoft.com/ado/2007/08/dataservices/metadata&#39;</span><span class="p">,</span>
+    <span class="s">&#39;d&#39;</span><span class="p">:</span> <span class="s">&#39;http://schemas.microsoft.com/ado/2007/08/dataservices&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_make_etree_ns_attr_name</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&#39;{&#39;</span> <span class="o">+</span> <span class="n">ns</span> <span class="o">+</span> <span class="s">&#39;}&#39;</span> <span class="o">+</span> <span class="n">name</span>
+
+
+<span class="k">def</span> <span class="nf">_get_etree_tag_name_without_ns</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s">&#39;}&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">val</span>
+
+
+<span class="k">def</span> <span class="nf">_get_etree_text</span><span class="p">(</span><span class="n">element</span><span class="p">):</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">text</span>
+    <span class="k">return</span> <span class="n">text</span> <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">_get_readable_id</span><span class="p">(</span><span class="n">id_name</span><span class="p">,</span> <span class="n">id_prefix_to_skip</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;simplified an id to be more friendly for us people&quot;&quot;&quot;</span>
+    <span class="c"># id_name is in the form &#39;https://namespace.host.suffix/name&#39;</span>
+    <span class="c"># where name may contain a forward slash!</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">id_name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;//&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pos</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="n">id_prefix_to_skip</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">id_name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">id_prefix_to_skip</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">id_prefix_to_skip</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">id_name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pos</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">id_name</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">id_name</span>
+
+
+<span class="k">def</span> <span class="nf">_create_entry</span><span class="p">(</span><span class="n">entry_body</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Adds common part of entry to a given entry body and return the whole</span>
+<span class="sd">    xml. &#39;&#39;&#39;</span>
+    <span class="n">updated_str</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">utcoffset</span><span class="p">()</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">updated_str</span> <span class="o">+=</span> <span class="s">&#39;+00:00&#39;</span>
+
+    <span class="n">entry_start</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;</span>
+<span class="s">&lt;entry xmlns:d=&quot;http://schemas.microsoft.com/ado/2007/08/dataservices&quot; xmlns:m=&quot;http://schemas.microsoft.com/ado/2007/08/dataservices/metadata&quot; xmlns=&quot;http://www.w3.org/2005/Atom&quot; &gt;</span>
+<span class="s">&lt;title /&gt;&lt;updated&gt;{updated}&lt;/updated&gt;&lt;author&gt;&lt;name /&gt;&lt;/author&gt;&lt;id /&gt;</span>
+<span class="s">&lt;content type=&quot;application/xml&quot;&gt;</span>
+<span class="s">    {body}&lt;/content&gt;&lt;/entry&gt;&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">entry_start</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">updated</span><span class="o">=</span><span class="n">updated_str</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">entry_body</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_to_datetime</span><span class="p">(</span><span class="n">strtime</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">strtime</span><span class="p">,</span> <span class="s">&quot;%Y-%m-</span><span class="si">%d</span><span class="s">T%H:%M:%S.</span><span class="si">%f</span><span class="s">&quot;</span><span class="p">)</span>
+
+<span class="n">_KNOWN_SERIALIZATION_XFORMS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;include_apis&#39;</span><span class="p">:</span> <span class="s">&#39;IncludeAPIs&#39;</span><span class="p">,</span>
+    <span class="s">&#39;message_id&#39;</span><span class="p">:</span> <span class="s">&#39;MessageId&#39;</span><span class="p">,</span>
+    <span class="s">&#39;content_md5&#39;</span><span class="p">:</span> <span class="s">&#39;Content-MD5&#39;</span><span class="p">,</span>
+    <span class="s">&#39;last_modified&#39;</span><span class="p">:</span> <span class="s">&#39;Last-Modified&#39;</span><span class="p">,</span>
+    <span class="s">&#39;cache_control&#39;</span><span class="p">:</span> <span class="s">&#39;Cache-Control&#39;</span><span class="p">,</span>
+    <span class="s">&#39;account_admin_live_email_id&#39;</span><span class="p">:</span> <span class="s">&#39;AccountAdminLiveEmailId&#39;</span><span class="p">,</span>
+    <span class="s">&#39;service_admin_live_email_id&#39;</span><span class="p">:</span> <span class="s">&#39;ServiceAdminLiveEmailId&#39;</span><span class="p">,</span>
+    <span class="s">&#39;subscription_id&#39;</span><span class="p">:</span> <span class="s">&#39;SubscriptionID&#39;</span><span class="p">,</span>
+    <span class="s">&#39;fqdn&#39;</span><span class="p">:</span> <span class="s">&#39;FQDN&#39;</span><span class="p">,</span>
+    <span class="s">&#39;private_id&#39;</span><span class="p">:</span> <span class="s">&#39;PrivateID&#39;</span><span class="p">,</span>
+    <span class="s">&#39;os_virtual_hard_disk&#39;</span><span class="p">:</span> <span class="s">&#39;OSVirtualHardDisk&#39;</span><span class="p">,</span>
+    <span class="s">&#39;logical_disk_size_in_gb&#39;</span><span class="p">:</span> <span class="s">&#39;LogicalDiskSizeInGB&#39;</span><span class="p">,</span>
+    <span class="s">&#39;logical_size_in_gb&#39;</span><span class="p">:</span> <span class="s">&#39;LogicalSizeInGB&#39;</span><span class="p">,</span>
+    <span class="s">&#39;os&#39;</span><span class="p">:</span> <span class="s">&#39;OS&#39;</span><span class="p">,</span>
+    <span class="s">&#39;persistent_vm_downtime_info&#39;</span><span class="p">:</span> <span class="s">&#39;PersistentVMDowntimeInfo&#39;</span><span class="p">,</span>
+    <span class="s">&#39;copy_id&#39;</span><span class="p">:</span> <span class="s">&#39;CopyId&#39;</span><span class="p">,</span>
+    <span class="s">&#39;os_state&#39;</span><span class="p">:</span> <span class="s">&#39;OSState&#39;</span><span class="p">,</span>
+    <span class="s">&#39;vm_image&#39;</span><span class="p">:</span> <span class="s">&#39;VMImage&#39;</span><span class="p">,</span>
+    <span class="s">&#39;vm_images&#39;</span><span class="p">:</span> <span class="s">&#39;VMImages&#39;</span><span class="p">,</span>
+    <span class="s">&#39;os_disk_configuration&#39;</span><span class="p">:</span> <span class="s">&#39;OSDiskConfiguration&#39;</span><span class="p">,</span>
+    <span class="s">&#39;public_ips&#39;</span><span class="p">:</span> <span class="s">&#39;PublicIPs&#39;</span><span class="p">,</span> 
+    <span class="s">&#39;public_ip&#39;</span><span class="p">:</span> <span class="s">&#39;PublicIP&#39;</span><span class="p">,</span> 
+    <span class="s">&#39;supported_os&#39;</span><span class="p">:</span> <span class="s">&#39;SupportedOS&#39;</span><span class="p">,</span>
+    <span class="s">&#39;reserved_ip&#39;</span><span class="p">:</span> <span class="s">&#39;ReservedIP&#39;</span><span class="p">,</span>
+    <span class="s">&#39;reserved_ips&#39;</span><span class="p">:</span> <span class="s">&#39;ReservedIPs&#39;</span><span class="p">,</span>
+    <span class="s">&#39;aad_tenant_id&#39;</span><span class="p">:</span> <span class="s">&#39;AADTenantID&#39;</span><span class="p">,</span>
+    <span class="s">&#39;start_ip_address&#39;</span><span class="p">:</span> <span class="s">&#39;StartIPAddress&#39;</span><span class="p">,</span>
+    <span class="s">&#39;end_ip_address&#39;</span><span class="p">:</span> <span class="s">&#39;EndIPAddress&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_get_serialization_name</span><span class="p">(</span><span class="n">element_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;converts a Python name into a serializable name&quot;&quot;&quot;</span>
+    <span class="n">known</span> <span class="o">=</span> <span class="n">_KNOWN_SERIALIZATION_XFORMS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">element_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">known</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">known</span>
+
+    <span class="k">if</span> <span class="n">element_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;x_ms_&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">element_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">,</span> <span class="s">&#39;-&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">element_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;_id&#39;</span><span class="p">):</span>
+        <span class="n">element_name</span> <span class="o">=</span> <span class="n">element_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;_id&#39;</span><span class="p">,</span> <span class="s">&#39;ID&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;content_&#39;</span><span class="p">,</span> <span class="s">&#39;last_modified&#39;</span><span class="p">,</span> <span class="s">&#39;if_&#39;</span><span class="p">,</span> <span class="s">&#39;cache_control&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">element_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">element_name</span> <span class="o">=</span> <span class="n">element_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">,</span> <span class="s">&#39;-_&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">element_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">))</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,):</span>
+    <span class="n">_unicode_type</span> <span class="o">=</span> <span class="nb">unicode</span>
+
+    <span class="k">def</span> <span class="nf">_str</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">_str</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">_unicode_type</span> <span class="o">=</span> <span class="nb">str</span>
+
+
+<span class="k">def</span> <span class="nf">_str_or_none</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">return</span> <span class="n">_str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_int_or_none</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_bool_or_none</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;true&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;false&#39;</span>
+
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_convert_class_to_xml</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">xml_prefix</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;&#39;</span>
+
+    <span class="n">xmlstr</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">xml_prefix</span><span class="p">:</span>
+        <span class="n">xmlstr</span> <span class="o">=</span> <span class="s">&#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#39;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+            <span class="n">xmlstr</span> <span class="o">+=</span> <span class="n">_convert_class_to_xml</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">WindowsAzureData</span><span class="p">):</span>
+        <span class="n">class_name</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">xmlstr</span> <span class="o">+=</span> <span class="s">&#39;&lt;&#39;</span> <span class="o">+</span> <span class="n">class_name</span> <span class="o">+</span> <span class="s">&#39;&gt;&#39;</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> \
+                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">WindowsAzureData</span><span class="p">):</span>
+                    <span class="n">xmlstr</span> <span class="o">+=</span> <span class="n">_convert_class_to_xml</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">xmlstr</span> <span class="o">+=</span> <span class="p">(</span><span class="s">&#39;&lt;&#39;</span> <span class="o">+</span> <span class="n">_get_serialization_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&gt;&#39;</span> <span class="o">+</span>
+                               <span class="n">xml_escape</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span> <span class="o">+</span> <span class="s">&#39;&lt;/&#39;</span> <span class="o">+</span>
+                               <span class="n">_get_serialization_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&gt;&#39;</span><span class="p">)</span>
+        <span class="n">xmlstr</span> <span class="o">+=</span> <span class="s">&#39;&lt;/&#39;</span> <span class="o">+</span> <span class="n">class_name</span> <span class="o">+</span> <span class="s">&#39;&gt;&#39;</span>
+    <span class="k">return</span> <span class="n">xmlstr</span>
+
+
+<span class="k">def</span> <span class="nf">_set_continuation_from_response_headers</span><span class="p">(</span><span class="n">feeds</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+    <span class="n">x_ms_continuation</span> <span class="o">=</span> <span class="n">HeaderDict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s">&#39;x-ms-continuation&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">x_ms_continuation</span><span class="p">[</span><span class="n">name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s">&#39;x-ms-continuation&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="n">x_ms_continuation</span><span class="p">:</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">feeds</span><span class="p">,</span> <span class="s">&#39;x_ms_continuation&#39;</span><span class="p">,</span> <span class="n">x_ms_continuation</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_validate_type_bytes</span><span class="p">(</span><span class="n">param_name</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">_ERROR_VALUE_SHOULD_BE_BYTES</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param_name</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_validate_not_none</span><span class="p">(</span><span class="n">param_name</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">param</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">_ERROR_VALUE_NONE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param_name</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_get_request_body_bytes_only</span><span class="p">(</span><span class="n">param_name</span><span class="p">,</span> <span class="n">param_value</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Validates the request body passed in and converts it to bytes</span>
+<span class="sd">    if our policy allows it.&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">param_value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param_value</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">param_value</span>
+
+    <span class="c"># Previous versions of the SDK allowed data types other than bytes to be</span>
+    <span class="c"># passed in, and they would be auto-converted to bytes.  We preserve this</span>
+    <span class="c"># behavior when running under 2.7, but issue a warning.</span>
+    <span class="c"># Python 3 support is new, so we reject anything that&#39;s not bytes.</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">_WARNING_VALUE_SHOULD_BE_BYTES</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param_name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">_get_request_body</span><span class="p">(</span><span class="n">param_value</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">_ERROR_VALUE_SHOULD_BE_BYTES</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param_name</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_get_request_body</span><span class="p">(</span><span class="n">request_body</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Converts an object into a request body.  If it&#39;s None</span>
+<span class="sd">    we&#39;ll return an empty string, if it&#39;s one of our objects it&#39;ll</span>
+<span class="sd">    convert it to XML and return it.  Otherwise we just use the object</span>
+<span class="sd">    directly&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">request_body</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">request_body</span><span class="p">,</span> <span class="n">WindowsAzureData</span><span class="p">):</span>
+        <span class="n">request_body</span> <span class="o">=</span> <span class="n">_convert_class_to_xml</span><span class="p">(</span><span class="n">request_body</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">request_body</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">request_body</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">request_body</span><span class="p">,</span> <span class="n">_unicode_type</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">request_body</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+    <span class="n">request_body</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">request_body</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">request_body</span><span class="p">,</span> <span class="n">_unicode_type</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">request_body</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">request_body</span>
+
+
+<span class="k">class</span> <span class="nc">_dict_of</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;a dict which carries with it the xml element names for key,val.</span>
+<span class="sd">    Used for deserializaion and construction of the lists&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pair_xml_element_name</span><span class="p">,</span> <span class="n">key_xml_element_name</span><span class="p">,</span>
+                 <span class="n">value_xml_element_name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pair_xml_element_name</span> <span class="o">=</span> <span class="n">pair_xml_element_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key_xml_element_name</span> <span class="o">=</span> <span class="n">key_xml_element_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_xml_element_name</span> <span class="o">=</span> <span class="n">value_xml_element_name</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">_dict_of</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">_list_of</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;a list which carries with it the type that&#39;s expected to go in it.</span>
+<span class="sd">    Used for deserializaion and construction of the lists&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_type</span><span class="p">,</span> <span class="n">xml_element_name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_type</span> <span class="o">=</span> <span class="n">list_type</span>
+        <span class="k">if</span> <span class="n">xml_element_name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xml_element_name</span> <span class="o">=</span> <span class="n">list_type</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xml_element_name</span> <span class="o">=</span> <span class="n">xml_element_name</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">_list_of</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">_scalar_list_of</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;a list of scalar types which carries with it the type that&#39;s</span>
+<span class="sd">    expected to go in it along with its xml element name.</span>
+<span class="sd">    Used for deserializaion and construction of the lists&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_type</span><span class="p">,</span> <span class="n">xml_element_name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_type</span> <span class="o">=</span> <span class="n">list_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xml_element_name</span> <span class="o">=</span> <span class="n">xml_element_name</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">_scalar_list_of</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        
+<span class="k">class</span> <span class="nc">_xml_attribute</span><span class="p">:</span>
+    
+    <span class="sd">&quot;&quot;&quot;a accessor to XML attributes</span>
+<span class="sd">    expected to go in it along with its xml element name.</span>
+<span class="sd">    Used for deserialization and construction&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xml_element_name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xml_element_name</span> <span class="o">=</span> <span class="n">xml_element_name</span>
+
+
+<span class="k">def</span> <span class="nf">_update_request_uri_query_local_storage</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">use_local_storage</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; create correct uri and query for the request &#39;&#39;&#39;</span>
+    <span class="n">uri</span><span class="p">,</span> <span class="n">query</span> <span class="o">=</span> <span class="n">_update_request_uri_query</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">use_local_storage</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">DEV_ACCOUNT_NAME</span> <span class="o">+</span> <span class="n">uri</span><span class="p">,</span> <span class="n">query</span>
+    <span class="k">return</span> <span class="n">uri</span><span class="p">,</span> <span class="n">query</span>
+
+
+<span class="k">def</span> <span class="nf">_update_request_uri_query</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;pulls the query string out of the URI and moves it into</span>
+<span class="sd">    the query portion of the request object.  If there are already</span>
+<span class="sd">    query parameters on the request the parameters in the URI will</span>
+<span class="sd">    appear after the existing parameters&#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="s">&#39;?&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">query_string</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s">&#39;?&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">query_string</span><span class="p">:</span>
+            <span class="n">query_params</span> <span class="o">=</span> <span class="n">query_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;&amp;&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">query_params</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s">&#39;=&#39;</span> <span class="ow">in</span> <span class="n">query</span><span class="p">:</span>
+                    <span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s">&#39;=&#39;</span><span class="p">)</span>
+                    <span class="n">request</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+
+    <span class="n">request</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">url_quote</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;/()$=</span><span class="se">\&#39;</span><span class="s">,&#39;</span><span class="p">)</span>
+
+    <span class="c"># add encoded queries to request.path.</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">path</span> <span class="o">+=</span> <span class="s">&#39;?&#39;</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">path</span> <span class="o">+=</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&#39;=&#39;</span> <span class="o">+</span> <span class="n">url_quote</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s">&#39;/()$=</span><span class="se">\&#39;</span><span class="s">,&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&amp;&#39;</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">query</span>
+
+
+<span class="k">def</span> <span class="nf">_dont_fail_on_exist</span><span class="p">(</span><span class="n">error</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; don&#39;t throw exception if the resource exists.</span>
+<span class="sd">    This is called by create_* APIs with fail_on_exist=False&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">WindowsAzureConflictError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">error</span>
+
+
+<span class="k">def</span> <span class="nf">_dont_fail_not_exist</span><span class="p">(</span><span class="n">error</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; don&#39;t throw exception if the resource doesn&#39;t exist.</span>
+<span class="sd">    This is called by create_* APIs with fail_on_exist=False&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">WindowsAzureMissingResourceError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">error</span>
+
+
+<span class="k">def</span> <span class="nf">_general_error_handler</span><span class="p">(</span><span class="n">http_error</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Simple error handler for azure.&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">http_error</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">409</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">WindowsAzureConflictError</span><span class="p">(</span>
+            <span class="n">_ERROR_CONFLICT</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">http_error</span><span class="p">)))</span>
+    <span class="k">elif</span> <span class="n">http_error</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">WindowsAzureMissingResourceError</span><span class="p">(</span>
+            <span class="n">_ERROR_NOT_FOUND</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">http_error</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">http_error</span><span class="o">.</span><span class="n">respbody</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WindowsAzureError</span><span class="p">(</span>
+                <span class="n">_ERROR_UNKNOWN</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">http_error</span><span class="p">))</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="n">http_error</span><span class="o">.</span><span class="n">respbody</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8-sig&#39;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WindowsAzureError</span><span class="p">(</span><span class="n">_ERROR_UNKNOWN</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">http_error</span><span class="p">)))</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_response_for_dict</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Extracts name-values from response header. Filter out the standard</span>
+<span class="sd">    http headers.&#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="n">http_headers</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;server&#39;</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;location&#39;</span><span class="p">,</span> <span class="s">&#39;host&#39;</span><span class="p">,</span>
+                    <span class="s">&#39;via&#39;</span><span class="p">,</span> <span class="s">&#39;proxy-connection&#39;</span><span class="p">,</span> <span class="s">&#39;connection&#39;</span><span class="p">]</span>
+    <span class="n">return_dict</span> <span class="o">=</span> <span class="n">HeaderDict</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">http_headers</span><span class="p">:</span>
+                <span class="n">return_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">return</span> <span class="n">return_dict</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_response_for_dict_prefix</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">prefixes</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Extracts name-values for names starting with prefix from response</span>
+<span class="sd">    header. Filter out the standard http headers.&#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="n">return_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">orig_dict</span> <span class="o">=</span> <span class="n">_parse_response_for_dict</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">orig_dict</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">orig_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">prefix_value</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix_value</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+                    <span class="n">return_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                    <span class="k">break</span>
+        <span class="k">return</span> <span class="n">return_dict</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_response_for_dict_filter</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">filter</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Extracts name-values for names in filter from response header. Filter</span>
+<span class="sd">    out the standard http headers.&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="n">return_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">orig_dict</span> <span class="o">=</span> <span class="n">_parse_response_for_dict</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">orig_dict</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">orig_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">:</span>
+                <span class="n">return_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">return_dict</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+
+<span class="k">def</span> <span class="nf">_sign_string</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">string_to_sign</span><span class="p">,</span> <span class="n">key_is_base64</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">key_is_base64</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">_decode_base64_to_bytes</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">_unicode_type</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string_to_sign</span><span class="p">,</span> <span class="n">_unicode_type</span><span class="p">):</span>
+        <span class="n">string_to_sign</span> <span class="o">=</span> <span class="n">string_to_sign</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">signed_hmac_sha256</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">HMAC</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">string_to_sign</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">signed_hmac_sha256</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+    <span class="n">encoded_digest</span> <span class="o">=</span> <span class="n">_encode_base64</span><span class="p">(</span><span class="n">digest</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">encoded_digest</span>
+
+
+<span class="k">def</span> <span class="nf">_lower</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">_ETreeXmlToObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">return_type</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parse the HTTPResponse&#39;s body and fill all the data into a class of</span>
+<span class="sd">        return_type.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        <span class="n">xml_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">return_type</span><span class="p">,</span> <span class="s">&#39;_xml_name&#39;</span><span class="p">,</span> <span class="n">return_type</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="n">root</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">xml_name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_parse_response_body_from_xml_node</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">return_type</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">None</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_enum_results_list</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">return_type</span><span class="p">,</span> <span class="n">resp_type</span><span class="p">,</span> <span class="n">item_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;resp_body is the XML we received</span>
+<span class="sd">        resp_type is a string, such as Containers,</span>
+<span class="sd">        return_type is the type we&#39;re constructing, such as ContainerEnumResults</span>
+<span class="sd">        item_type is the type object of the item to be created, such as Container</span>
+
+<span class="sd">        This function then returns a ContainerEnumResults object with the</span>
+<span class="sd">        containers member populated with the results.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># parsing something like:</span>
+        <span class="c"># &lt;EnumerationResults ... &gt;</span>
+        <span class="c">#   &lt;Queues&gt;</span>
+        <span class="c">#       &lt;Queue&gt;</span>
+        <span class="c">#           &lt;Something /&gt;</span>
+        <span class="c">#           &lt;SomethingElse /&gt;</span>
+        <span class="c">#       &lt;/Queue&gt;</span>
+        <span class="c">#   &lt;/Queues&gt;</span>
+        <span class="c"># &lt;/EnumerationResults&gt;</span>
+        <span class="n">return_obj</span> <span class="o">=</span> <span class="n">return_type</span><span class="p">()</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">container_element</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">resp_type</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">item_element</span> <span class="ow">in</span> <span class="n">container_element</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">resp_type</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">fill_instance_element</span><span class="p">(</span><span class="n">item_element</span><span class="p">,</span> <span class="n">item_type</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">return_obj</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c"># queues, Queues, this is the list its self which we populated</span>
+            <span class="c"># above</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">resp_type</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="c"># the list its self.</span>
+                <span class="k">continue</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">fill_data_member</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span> <span class="n">resp_type</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">items</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">return_obj</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_simple_list</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">return_type</span><span class="p">,</span> <span class="n">item_type</span><span class="p">,</span> <span class="n">list_name</span><span class="p">):</span>
+        <span class="n">respbody</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">body</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">return_type</span><span class="p">()</span>
+        <span class="n">res_items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">respbody</span><span class="p">)</span>
+        <span class="n">type_name</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">item_name</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">item_name</span><span class="p">):</span>
+            <span class="n">res_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">fill_instance_element</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">item_type</span><span class="p">))</span>
+
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">list_name</span><span class="p">,</span> <span class="n">res_items</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">convert_response_to_feeds</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">convert_func</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="n">feeds</span> <span class="o">=</span> <span class="n">_list_of</span><span class="p">(</span><span class="n">Feed</span><span class="p">)</span>
+
+        <span class="n">_set_continuation_from_response_headers</span><span class="p">(</span><span class="n">feeds</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+
+        <span class="n">root</span> <span class="o">=</span> <span class="n">ETree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+
+        <span class="c"># some feeds won&#39;t have the &#39;feed&#39; element, just a single &#39;entry&#39; element</span>
+        <span class="n">root_name</span> <span class="o">=</span> <span class="n">_get_etree_tag_name_without_ns</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">root_name</span> <span class="o">==</span> <span class="s">&#39;feed&#39;</span><span class="p">:</span>
+            <span class="n">entries</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&quot;./atom:entry&quot;</span><span class="p">,</span> <span class="n">_etree_entity_feed_namespaces</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">root_name</span> <span class="o">==</span> <span class="s">&#39;entry&#39;</span><span class="p">:</span>
+            <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span><span class="n">root</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+            <span class="n">feeds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">convert_func</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">feeds</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_entry_properties_from_element</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">include_id</span><span class="p">,</span> <span class="n">id_prefix_to_skip</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">use_title_as_id</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; get properties from element tree element &#39;&#39;&#39;</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">etag</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_make_etree_ns_attr_name</span><span class="p">(</span><span class="n">_etree_entity_feed_namespaces</span><span class="p">[</span><span class="s">&#39;m&#39;</span><span class="p">],</span> <span class="s">&#39;etag&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">etag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">properties</span><span class="p">[</span><span class="s">&#39;etag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">etag</span>
+
+        <span class="n">updated</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s">&#39;./atom:updated&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">_etree_entity_feed_namespaces</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">updated</span><span class="p">:</span>
+            <span class="n">properties</span><span class="p">[</span><span class="s">&#39;updated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">updated</span>
+
+        <span class="n">author_name</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s">&#39;./atom:author/atom:name&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">_etree_entity_feed_namespaces</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">author_name</span><span class="p">:</span>
+            <span class="n">properties</span><span class="p">[</span><span class="s">&#39;author&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">author_name</span>
+
+        <span class="k">if</span> <span class="n">include_id</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">use_title_as_id</span><span class="p">:</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s">&#39;./atom:title&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">_etree_entity_feed_namespaces</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+                    <span class="n">properties</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">id</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s">&#39;./atom:id&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">_etree_entity_feed_namespaces</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">id</span><span class="p">:</span>
+                    <span class="n">properties</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_get_readable_id</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">id_prefix_to_skip</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">properties</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fill_instance_element</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">return_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Converts a DOM element into the specified object&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_parse_response_body_from_xml_node</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">return_type</span><span class="p">)</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fill_data_member</span><span class="p">(</span><span class="n">xmldoc</span><span class="p">,</span> <span class="n">element_name</span><span class="p">,</span> <span class="n">data_member</span><span class="p">):</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="n">xmldoc</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">_get_serialization_name</span><span class="p">(</span><span class="n">element_name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">element</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="n">_get_etree_text</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">data_member</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_member</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_to_datetime</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">data_member</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s">&#39;false&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">data_member</span><span class="p">)(</span><span class="n">value</span><span class="p">)</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_response_body_from_xml_node</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">return_type</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        parse the xml and fill all the data into a class of return_type</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">return_obj</span> <span class="o">=</span> <span class="n">return_type</span><span class="p">()</span>
+        <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_fill_data_to_return_object</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">return_obj</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">return_obj</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_fill_instance_child</span><span class="p">(</span><span class="n">xmldoc</span><span class="p">,</span> <span class="n">element_name</span><span class="p">,</span> <span class="n">return_type</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Converts a child of the current dom element to the specified type.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="n">xmldoc</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">_get_serialization_name</span><span class="p">(</span><span class="n">element_name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">element</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="n">return_obj</span> <span class="o">=</span> <span class="n">return_type</span><span class="p">()</span>
+        <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_fill_data_to_return_object</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">return_obj</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">return_obj</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_fill_data_to_return_object</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">return_obj</span><span class="p">):</span>
+        <span class="n">members</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">return_obj</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">members</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_list_of</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span>
+                        <span class="n">name</span><span class="p">,</span>
+                        <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_fill_list_of</span><span class="p">(</span><span class="n">node</span><span class="p">,</span>
+                                      <span class="n">value</span><span class="o">.</span><span class="n">list_type</span><span class="p">,</span>
+                                      <span class="n">value</span><span class="o">.</span><span class="n">xml_element_name</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_scalar_list_of</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span>
+                        <span class="n">name</span><span class="p">,</span>
+                        <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_fill_scalar_list_of</span><span class="p">(</span><span class="n">node</span><span class="p">,</span>
+                                             <span class="n">value</span><span class="o">.</span><span class="n">list_type</span><span class="p">,</span>
+                                             <span class="n">_get_serialization_name</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
+                                             <span class="n">value</span><span class="o">.</span><span class="n">xml_element_name</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_dict_of</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span>
+                        <span class="n">name</span><span class="p">,</span>
+                        <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_fill_dict_of</span><span class="p">(</span><span class="n">node</span><span class="p">,</span>
+                                      <span class="n">_get_serialization_name</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
+                                      <span class="n">value</span><span class="o">.</span><span class="n">pair_xml_element_name</span><span class="p">,</span>
+                                      <span class="n">value</span><span class="o">.</span><span class="n">key_xml_element_name</span><span class="p">,</span>
+                                      <span class="n">value</span><span class="o">.</span><span class="n">value_xml_element_name</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_xml_attribute</span><span class="p">):</span>
+                <span class="n">real_value</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">xml_element_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">real_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">real_value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">WindowsAzureData</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span>
+                        <span class="n">name</span><span class="p">,</span>
+                        <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_fill_instance_child</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">__class__</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span>
+                        <span class="n">name</span><span class="p">,</span>
+                        <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_fill_dict</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">_get_serialization_name</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_Base64String</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">fill_data_member</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">_decode_base64_to_text</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="c"># always set the attribute, so we don&#39;t end up returning an object</span>
+                <span class="c"># with type _Base64String</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">fill_data_member</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">return_obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_fill_list_of</span><span class="p">(</span><span class="n">xmldoc</span><span class="p">,</span> <span class="n">element_type</span><span class="p">,</span> <span class="n">xml_element_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_ETreeXmlToObject</span><span class="o">.</span><span class="n">_parse_response_body_from_xml_node</span><span class="p">(</span><span class="n">xmlelement</span><span class="p">,</span> <span class="n">element_type</span><span class="p">)</span> \
+            <span class="k">for</span> <span class="n">xmlelement</span> <span class="ow">in</span> <span class="n">xmldoc</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">xml_element_name</span><span class="p">)]</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_fill_scalar_list_of</span><span class="p">(</span><span class="n">xmldoc</span><span class="p">,</span> <span class="n">element_type</span><span class="p">,</span> <span class="n">parent_xml_element_name</span><span class="p">,</span>
+                             <span class="n">xml_element_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Converts an xml fragment into a list of scalar types.  The parent xml</span>
+<span class="sd">        element contains a flat list of xml elements which are converted into the</span>
+<span class="sd">        specified scalar type and added to the list.</span>
+<span class="sd">        Example:</span>
+<span class="sd">        xmldoc=</span>
+<span class="sd">    &lt;Endpoints&gt;</span>
+<span class="sd">        &lt;Endpoint&gt;http://{storage-service-name}.blob.core.windows.net/&lt;/Endpoint&gt;</span>
+<span class="sd">        &lt;Endpoint&gt;http://{storage-service-name}.queue.core.windows.net/&lt;/Endpoint&gt;</span>
+<span class="sd">        &lt;Endpoint&gt;http://{storage-service-name}.table.core.windows.net/&lt;/Endpoint&gt;</span>
+<span class="sd">    &lt;/Endpoints&gt;</span>
+<span class="sd">        element_type=str</span>
+<span class="sd">        parent_xml_element_name=&#39;Endpoints&#39;</span>
+<span class="sd">        xml_element_name=&#39;Endpoint&#39;</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;_scalar_list_of not supported&#39;</span><span class="p">)</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_fill_dict</span><span class="p">(</span><span class="n">xmldoc</span><span class="p">,</span> <span class="n">element_name</span><span class="p">):</span>
+        <span class="n">container_element</span> <span class="o">=</span> <span class="n">xmldoc</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">element_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">container_element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">return_obj</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">item_element</span> <span class="ow">in</span> <span class="n">container_element</span><span class="o">.</span><span class="n">getchildren</span><span class="p">():</span>
+                <span class="n">return_obj</span><span class="p">[</span><span class="n">item_element</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">_get_etree_text</span><span class="p">(</span><span class="n">item_element</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">return_obj</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_fill_dict_of</span><span class="p">(</span><span class="n">xmldoc</span><span class="p">,</span> <span class="n">parent_xml_element_name</span><span class="p">,</span> <span class="n">pair_xml_element_name</span><span class="p">,</span>
+                      <span class="n">key_xml_element_name</span><span class="p">,</span> <span class="n">value_xml_element_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Converts an xml fragment into a dictionary. The parent xml element</span>
+<span class="sd">        contains a list of xml elements where each element has a child element for</span>
+<span class="sd">        the key, and another for the value.</span>
+<span class="sd">        Example:</span>
+<span class="sd">        xmldoc=</span>
+<span class="sd">    &lt;ExtendedProperties&gt;</span>
+<span class="sd">        &lt;ExtendedProperty&gt;</span>
+<span class="sd">            &lt;Name&gt;Ext1&lt;/Name&gt;</span>
+<span class="sd">            &lt;Value&gt;Val1&lt;/Value&gt;</span>
+<span class="sd">        &lt;/ExtendedProperty&gt;</span>
+<span class="sd">        &lt;ExtendedProperty&gt;</span>
+<span class="sd">            &lt;Name&gt;Ext2&lt;/Name&gt;</span>
+<span class="sd">            &lt;Value&gt;Val2&lt;/Value&gt;</span>
+<span class="sd">        &lt;/ExtendedProperty&gt;</span>
+<span class="sd">    &lt;/ExtendedProperties&gt;</span>
+<span class="sd">        element_type=str</span>
+<span class="sd">        parent_xml_element_name=&#39;ExtendedProperties&#39;</span>
+<span class="sd">        pair_xml_element_name=&#39;ExtendedProperty&#39;</span>
+<span class="sd">        key_xml_element_name=&#39;Name&#39;</span>
+<span class="sd">        value_xml_element_name=&#39;Value&#39;</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;_dict_of not supported&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_XmlWriter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent_string</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indent_level</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indent_string</span> <span class="o">=</span> <span class="n">indent_string</span>
+
+    <span class="k">def</span> <span class="nf">_before_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent_change</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indent_string</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">indent_level</span> <span class="o">+=</span> <span class="n">indent_change</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indent_string</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">indent_level</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_after_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent_change</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indent_string</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">indent_level</span> <span class="o">+=</span> <span class="n">indent_change</span>
+
+    <span class="k">def</span> <span class="nf">_write_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">attr_val</span><span class="p">,</span> <span class="n">attr_conv</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">attr_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">attr_name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;=&quot;&#39;</span><span class="p">)</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">attr_conv</span><span class="p">(</span><span class="n">_str</span><span class="p">(</span><span class="n">attr_val</span><span class="p">))</span> <span class="k">if</span> <span class="n">attr_conv</span> <span class="k">else</span> <span class="n">_str</span><span class="p">(</span><span class="n">attr_val</span><span class="p">)</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">xml_escape</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">val_conv</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_before_element</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&lt;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attrs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_attrs</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&gt;&#39;</span><span class="p">)</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">val_conv</span><span class="p">(</span><span class="n">_str</span><span class="p">(</span><span class="n">val</span><span class="p">))</span> <span class="k">if</span> <span class="n">val_conv</span> <span class="k">else</span> <span class="n">_str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">xml_escape</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&lt;/&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&gt;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_element</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">elements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name_val_convs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">conv</span> <span class="ow">in</span> <span class="n">name_val_convs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">conv</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">preprocessor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_before_element</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_element</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_before_element</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&lt;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attrs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_attrs</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&gt;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_element</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_before_element</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&lt;/&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&gt;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_element</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">xml</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

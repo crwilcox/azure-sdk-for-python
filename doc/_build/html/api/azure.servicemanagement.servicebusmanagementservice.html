@@ -1,0 +1,340 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>azure.servicemanagement.servicebusmanagementservice module &mdash; pydocumentdb 0.9.3-preview documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.9.3-preview',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="pydocumentdb 0.9.3-preview documentation" href="../index.html" />
+    <link rel="up" title="azure.servicemanagement package" href="azure.servicemanagement.html" />
+    <link rel="next" title="azure.servicemanagement.servicemanagementclient module" href="azure.servicemanagement.servicemanagementclient.html" />
+    <link rel="prev" title="azure.servicemanagement.schedulermanagementservice module" href="azure.servicemanagement.schedulermanagementservice.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.servicemanagementclient.html" title="azure.servicemanagement.servicemanagementclient module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.schedulermanagementservice.html" title="azure.servicemanagement.schedulermanagementservice module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li>
+          <li><a href="azure.servicemanagement.html" accesskey="U">azure.servicemanagement package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-azure.servicemanagement.servicebusmanagementservice">
+<span id="azure-servicemanagement-servicebusmanagementservice-module"></span><h1>azure.servicemanagement.servicebusmanagementservice module<a class="headerlink" href="#module-azure.servicemanagement.servicebusmanagementservice" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService">
+<em class="property">class </em><tt class="descclassname">azure.servicemanagement.servicebusmanagementservice.</tt><tt class="descname">ServiceBusManagementService</tt><big>(</big><em>subscription_id=None</em>, <em>cert_file=None</em>, <em>host='management.core.windows.net'</em>, <em>request_session=None</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">azure.servicemanagement.servicemanagementclient._ServiceManagementClient</span></tt></p>
+<p>Initializes the service bus management service.</p>
+<p>subscription_id: Subscription to manage.
+cert_file:</p>
+<blockquote>
+<div>Path to .pem certificate file (httplib), or location of the
+certificate in your Personal certificate store (winhttp) in the
+CURRENT_USERmyCertificateName format.
+If a request_session is specified, then this is unused.</div></blockquote>
+<p>host: Live ServiceClient URL. Defaults to Azure public cloud.
+request_session:</p>
+<blockquote>
+<div>Session object to use for http requests. If this is specified, it
+replaces the default use of httplib or winhttp. Also, the cert_file
+parameter is unused when a session is passed in.
+The session object handles authentication, and as such can support
+multiple types of authentication: .pem certificate, oauth.
+For example, you can pass in a Session instance from the requests
+library. To use .pem certificate authentication with requests
+library, set the path to the .pem file on the session.cert
+attribute.</div></blockquote>
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.check_namespace_availability">
+<tt class="descname">check_namespace_availability</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.check_namespace_availability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.check_namespace_availability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks to see if the specified service bus namespace is available, or
+if it has already been taken.</p>
+<p>name: Name of the service bus namespace to validate.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.create_namespace">
+<tt class="descname">create_namespace</tt><big>(</big><em>name</em>, <em>region</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.create_namespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.create_namespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new service bus namespace.</p>
+<p>name: Name of the service bus namespace to create.
+region: Region to create the namespace in.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.delete_namespace">
+<tt class="descname">delete_namespace</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.delete_namespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.delete_namespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a service bus namespace.</p>
+<p>name: Name of the service bus namespace to delete.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_data_notification_hub">
+<tt class="descname">get_metrics_data_notification_hub</tt><big>(</big><em>name</em>, <em>hub_name</em>, <em>metric</em>, <em>rollup</em>, <em>filter_expresssion</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_metrics_data_notification_hub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_data_notification_hub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the list of supported metrics for this namespace and topic</p>
+<p>name: Name of the service bus namespace.
+hub_name: Name of the service bus notification hub in this namespace.
+metric: name of a supported metric
+rollup: name of a supported rollup
+filter_expression: filter, for instance &#8220;$filter=Timestamp gt datetime&#8216;2014-10-01T00:00:00Z&#8217;&#8221;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_data_queue">
+<tt class="descname">get_metrics_data_queue</tt><big>(</big><em>name</em>, <em>queue_name</em>, <em>metric</em>, <em>rollup</em>, <em>filter_expresssion</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_metrics_data_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_data_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the list of supported metrics for this namespace and queue</p>
+<p>name: Name of the service bus namespace.
+queue_name: Name of the service bus queue in this namespace.
+metric: name of a supported metric
+rollup: name of a supported rollup
+filter_expression: filter, for instance &#8220;$filter=Timestamp gt datetime&#8216;2014-10-01T00:00:00Z&#8217;&#8221;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_data_relay">
+<tt class="descname">get_metrics_data_relay</tt><big>(</big><em>name</em>, <em>relay_name</em>, <em>metric</em>, <em>rollup</em>, <em>filter_expresssion</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_metrics_data_relay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_data_relay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the list of supported metrics for this namespace and relay</p>
+<p>name: Name of the service bus namespace.
+relay_name: Name of the service bus relay in this namespace.
+metric: name of a supported metric
+rollup: name of a supported rollup
+filter_expression: filter, for instance &#8220;$filter=Timestamp gt datetime&#8216;2014-10-01T00:00:00Z&#8217;&#8221;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_data_topic">
+<tt class="descname">get_metrics_data_topic</tt><big>(</big><em>name</em>, <em>topic_name</em>, <em>metric</em>, <em>rollup</em>, <em>filter_expresssion</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_metrics_data_topic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_data_topic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the list of supported metrics for this namespace and topic</p>
+<p>name: Name of the service bus namespace.
+topic_name: Name of the service bus queue in this namespace.
+metric: name of a supported metric
+rollup: name of a supported rollup
+filter_expression: filter, for instance &#8220;$filter=Timestamp gt datetime&#8216;2014-10-01T00:00:00Z&#8217;&#8221;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_rollups_notification_hub">
+<tt class="descname">get_metrics_rollups_notification_hub</tt><big>(</big><em>name</em>, <em>hub_name</em>, <em>metric</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_metrics_rollups_notification_hub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_rollups_notification_hub" title="Permalink to this definition">¶</a></dt>
+<dd><p>This operation gets rollup data for Service Bus metrics notification hub.
+Rollup data includes the time granularity for the telemetry aggregation as well as
+the retention settings for each time granularity.</p>
+<p>name: Name of the service bus namespace.
+hub_name: Name of the service bus notification hub in this namespace.
+metric: name of a supported metric</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_rollups_queue">
+<tt class="descname">get_metrics_rollups_queue</tt><big>(</big><em>name</em>, <em>queue_name</em>, <em>metric</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_metrics_rollups_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_rollups_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>This operation gets rollup data for Service Bus metrics queue.
+Rollup data includes the time granularity for the telemetry aggregation as well as
+the retention settings for each time granularity.</p>
+<p>name: Name of the service bus namespace.
+queue_name: Name of the service bus queue in this namespace.
+metric: name of a supported metric</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_rollups_relay">
+<tt class="descname">get_metrics_rollups_relay</tt><big>(</big><em>name</em>, <em>relay_name</em>, <em>metric</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_metrics_rollups_relay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_rollups_relay" title="Permalink to this definition">¶</a></dt>
+<dd><p>This operation gets rollup data for Service Bus metrics relay.
+Rollup data includes the time granularity for the telemetry aggregation as well as
+the retention settings for each time granularity.</p>
+<p>name: Name of the service bus namespace.
+relay_name: Name of the service bus relay in this namespace.
+metric: name of a supported metric</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_rollups_topic">
+<tt class="descname">get_metrics_rollups_topic</tt><big>(</big><em>name</em>, <em>topic_name</em>, <em>metric</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_metrics_rollups_topic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_metrics_rollups_topic" title="Permalink to this definition">¶</a></dt>
+<dd><p>This operation gets rollup data for Service Bus metrics topic.
+Rollup data includes the time granularity for the telemetry aggregation as well as
+the retention settings for each time granularity.</p>
+<p>name: Name of the service bus namespace.
+topic_name: Name of the service bus queue in this namespace.
+metric: name of a supported metric</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_namespace">
+<tt class="descname">get_namespace</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_namespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_namespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details about a specific namespace.</p>
+<p>name: Name of the service bus namespace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_regions">
+<tt class="descname">get_regions</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_regions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_regions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of available service bus regions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_supported_metrics_notification_hub">
+<tt class="descname">get_supported_metrics_notification_hub</tt><big>(</big><em>name</em>, <em>hub_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_supported_metrics_notification_hub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_supported_metrics_notification_hub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the list of supported metrics for this namespace and topic</p>
+<p>name: Name of the service bus namespace.
+hub_name: Name of the service bus notification hub in this namespace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_supported_metrics_queue">
+<tt class="descname">get_supported_metrics_queue</tt><big>(</big><em>name</em>, <em>queue_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_supported_metrics_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_supported_metrics_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the list of supported metrics for this namespace and queue</p>
+<p>name: Name of the service bus namespace.
+queue_name: Name of the service bus queue in this namespace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_supported_metrics_relay">
+<tt class="descname">get_supported_metrics_relay</tt><big>(</big><em>name</em>, <em>relay_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_supported_metrics_relay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_supported_metrics_relay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the list of supported metrics for this namespace and relay</p>
+<p>name: Name of the service bus namespace.
+relay_name: Name of the service bus relay in this namespace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_supported_metrics_topic">
+<tt class="descname">get_supported_metrics_topic</tt><big>(</big><em>name</em>, <em>topic_name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.get_supported_metrics_topic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.get_supported_metrics_topic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the list of supported metrics for this namespace and topic</p>
+<p>name: Name of the service bus namespace.
+topic_name: Name of the service bus queue in this namespace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_namespaces">
+<tt class="descname">list_namespaces</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.list_namespaces"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_namespaces" title="Permalink to this definition">¶</a></dt>
+<dd><p>List the service bus namespaces defined on the account.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_notification_hubs">
+<tt class="descname">list_notification_hubs</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.list_notification_hubs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_notification_hubs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the notification hubs in the service namespace.</p>
+<p>name: Name of the service bus namespace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_queues">
+<tt class="descname">list_queues</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.list_queues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_queues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enumerates the queues in the service namespace.</p>
+<p>name: Name of the service bus namespace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_relays">
+<tt class="descname">list_relays</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.list_relays"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_relays" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the relays in the service namespace.</p>
+<p>name: Name of the service bus namespace.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_topics">
+<tt class="descname">list_topics</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../_modules/azure/servicemanagement/servicebusmanagementservice.html#ServiceBusManagementService.list_topics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#azure.servicemanagement.servicebusmanagementservice.ServiceBusManagementService.list_topics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the topics in the service namespace.</p>
+<p>name: Name of the service bus namespace.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="azure.servicemanagement.schedulermanagementservice.html"
+                        title="previous chapter">azure.servicemanagement.schedulermanagementservice module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="azure.servicemanagement.servicemanagementclient.html"
+                        title="next chapter">azure.servicemanagement.servicemanagementclient module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/azure.servicemanagement.servicebusmanagementservice.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.servicemanagementclient.html" title="azure.servicemanagement.servicemanagementclient module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="azure.servicemanagement.schedulermanagementservice.html" title="azure.servicemanagement.schedulermanagementservice module"
+             >previous</a> |</li>
+        <li><a href="../index.html">pydocumentdb 0.9.3-preview documentation</a> &raquo;</li>
+          <li><a href="modules.html" >azure</a> &raquo;</li>
+          <li><a href="azure.html" >azure package</a> &raquo;</li>
+          <li><a href="azure.servicemanagement.html" >azure.servicemanagement package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Microsoft.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
