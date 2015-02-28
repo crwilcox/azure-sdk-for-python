@@ -39,12 +39,14 @@ Contributing:
 
 To run tests:
 ~~~~~~~~~~~~~
-TODO.
+To run the tests for the Azure SDK for Python::
+    TODO.
 
 To generate documentation:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cd doc
-BuildDocs.bat
+To generate the documentation run::
+    cd doc
+    BuildDocs.bat
 
 
 Indices and tables
