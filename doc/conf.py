@@ -14,6 +14,8 @@
 
 import sys
 import os
+import pip
+pip.main(['install', 'sphinx_bootstrap_theme'])
 import sphinx_bootstrap_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
