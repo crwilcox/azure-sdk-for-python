@@ -21,10 +21,14 @@ If you want to install ``azure`` from source::
    
 Documentation:
 --------------
-* :ref:`modindex`
+* :doc:`ServiceManagementService <ref/azure.servicemanagement>`
+* :doc:`ServiceBus <ref/azure.servicebus>`
+* :doc:`Storage <ref/azure.storage>`
+* :ref:`All Documentation <modindex>`
+
 
 System Requirements:
------------------
+--------------------
 
 The supported Python versions are 2.7.x, 3.3.x, and 3.4.x
 To download Python, please visit
@@ -60,6 +64,3 @@ Indices and tables
 
 .. toctree::
   :hidden:
-
-  api/pydocumentdb
-  api/modules
