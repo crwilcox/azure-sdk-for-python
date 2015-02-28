@@ -44,8 +44,8 @@ To run tests:
 To generate documentation:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    $ cd doc
-    $ BuildDocs.bat
+    cd doc
+    BuildDocs.bat
 
 
 Indices and tables
