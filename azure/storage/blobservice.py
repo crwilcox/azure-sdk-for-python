@@ -93,7 +93,6 @@ class BlobService(_StorageClient):
         Creates the url to access a blob.
 
         container_name:
-
             Name of container.
         blob_name:
             Name of blob.
@@ -166,7 +165,6 @@ class BlobService(_StorageClient):
         with the same name already exists, the operation fails.
 
         container_name:
-
             Name of container to create.
         x_ms_meta_name_values:
             Optional. A dict with name_value pairs to associate with the
@@ -206,7 +204,6 @@ class BlobService(_StorageClient):
         specified container.
 
         container_name:
-
             Name of existing container.
         x_ms_lease_id:
             If specified, get_container_properties only succeeds if the
@@ -232,7 +229,6 @@ class BlobService(_StorageClient):
         metadata will be in returned dictionary['x-ms-meta-(name)'].
 
         container_name:
-
             Name of existing container.
         x_ms_lease_id:
             If specified, get_container_metadata only succeeds if the
@@ -260,7 +256,6 @@ class BlobService(_StorageClient):
         container.
 
         container_name:
-
             Name of existing container.
         x_ms_meta_name_values:
             A dict containing name, value for metadata.
@@ -290,7 +285,6 @@ class BlobService(_StorageClient):
         Gets the permissions for the specified container.
 
         container_name:
-
             Name of existing container.
         x_ms_lease_id:
             If specified, get_container_acl only succeeds if the
@@ -318,7 +312,6 @@ class BlobService(_StorageClient):
         Sets the permissions for the specified container.
 
         container_name:
-
             Name of existing container.
         signed_identifiers:
             SignedIdentifers instance
@@ -352,7 +345,6 @@ class BlobService(_StorageClient):
         Marks the specified container for deletion.
 
         container_name:
-
             Name of container to delete.
         fail_not_exist:
             Specify whether to throw an exception when the container doesn't
@@ -390,7 +382,6 @@ class BlobService(_StorageClient):
         The lock duration can be 15 to 60 seconds, or can be infinite.
 
         container_name:
-
             Name of existing container.
         x_ms_lease_action:
             Required. Possible values: acquire|renew|release|break|change
@@ -449,7 +440,6 @@ class BlobService(_StorageClient):
         Returns the list of blobs under the specified container.
 
         container_name:
-
             Name of existing container.
         prefix:
             Optional. Filters the results to return only blobs whose names
@@ -522,7 +512,6 @@ class BlobService(_StorageClient):
         have a version specified.
 
         storage_service_properties:
-
             a StorageServiceProperties object.
         timeout:
             Optional. The timeout parameter is expressed in seconds.
@@ -548,7 +537,6 @@ class BlobService(_StorageClient):
         Windows Azure Storage Analytics.
 
         timeout:
-
             Optional. The timeout parameter is expressed in seconds.
         '''
         request = HTTPRequest()
@@ -572,7 +560,6 @@ class BlobService(_StorageClient):
         system properties for the blob.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -606,7 +593,6 @@ class BlobService(_StorageClient):
         Sets system properties on the blob.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -663,7 +649,6 @@ class BlobService(_StorageClient):
         automatic chunking and progress notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of blob to create or update.
@@ -764,7 +749,6 @@ class BlobService(_StorageClient):
         existing block blob, with automatic chunking and progress notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of blob to create or update.
@@ -845,7 +829,6 @@ class BlobService(_StorageClient):
         notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of blob to create or update.
@@ -987,7 +970,6 @@ class BlobService(_StorageClient):
         notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of blob to create or update.
@@ -1105,7 +1087,6 @@ class BlobService(_StorageClient):
         existing block blob, with automatic chunking and progress notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of blob to create or update.
@@ -1191,7 +1172,6 @@ class BlobService(_StorageClient):
         existing page blob, with automatic chunking and progress notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of blob to create or update.
@@ -1278,7 +1258,6 @@ class BlobService(_StorageClient):
         existing page blob, with automatic chunking and progress notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of blob to create or update.
@@ -1400,7 +1379,6 @@ class BlobService(_StorageClient):
         notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of blob to create or update.
@@ -1494,7 +1472,6 @@ class BlobService(_StorageClient):
         of large blobs with automatic chunking and progress notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1539,7 +1516,6 @@ class BlobService(_StorageClient):
         notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1578,7 +1554,6 @@ class BlobService(_StorageClient):
         notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1643,7 +1618,6 @@ class BlobService(_StorageClient):
         progress notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1678,7 +1652,6 @@ class BlobService(_StorageClient):
         notifications.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1712,7 +1685,6 @@ class BlobService(_StorageClient):
         Returns all user-defined metadata for the specified blob or snapshot.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1746,7 +1718,6 @@ class BlobService(_StorageClient):
         name-value pairs.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1780,7 +1751,6 @@ class BlobService(_StorageClient):
         operations.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1842,7 +1812,6 @@ class BlobService(_StorageClient):
         Creates a read-only snapshot of a blob.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1897,7 +1866,6 @@ class BlobService(_StorageClient):
         Copies a blob to a destination within the storage account.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -1995,7 +1963,6 @@ class BlobService(_StorageClient):
          with zero length and full metadata.
 
          container_name:
-
              Name of destination container.
          blob_name:
              Name of destination blob.
@@ -2035,7 +2002,6 @@ class BlobService(_StorageClient):
         snapshot via the snapshot parameter.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -2088,7 +2054,6 @@ class BlobService(_StorageClient):
         Creates a new block to be committed as part of a blob.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -2140,7 +2105,6 @@ class BlobService(_StorageClient):
         operation.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -2207,7 +2171,6 @@ class BlobService(_StorageClient):
         block blob.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -2251,7 +2214,6 @@ class BlobService(_StorageClient):
         Writes a range of pages to a page blob.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.
@@ -2357,7 +2319,6 @@ class BlobService(_StorageClient):
         Retrieves the page ranges for a blob.
 
         container_name:
-
             Name of existing container.
         blob_name:
             Name of existing blob.

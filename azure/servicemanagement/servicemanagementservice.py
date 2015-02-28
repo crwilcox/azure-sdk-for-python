@@ -386,9 +386,7 @@ class ServiceManagementService(_ServiceManagementClient):
         Windows Azure.
 
         service_name:
-
             Name of the hosted service.
-
         label:
             A name for the hosted service. The name may be up to 100 characters
             in length. You must specify a value for either Label or
@@ -419,9 +417,7 @@ class ServiceManagementService(_ServiceManagementClient):
         Deletes the specified hosted service from Windows Azure.
 
         service_name:
-
             Name of the hosted service.
-
         '''
         _validate_not_none('service_name', service_name)
         return self._perform_delete(self._get_hosted_service_path(service_name))
@@ -432,9 +428,7 @@ class ServiceManagementService(_ServiceManagementClient):
         a deployment.
 
         service_name:
-
             Name of the hosted service.
-
         deployment_slot:
             The environment to which the hosted service is deployed. Valid
             values are: staging, production
@@ -452,9 +446,7 @@ class ServiceManagementService(_ServiceManagementClient):
         deployment.
 
         service_name:
-
             Name of the hosted service.
-
         deployment_name:
             The name of the deployment.
 
@@ -476,9 +468,7 @@ class ServiceManagementService(_ServiceManagementClient):
         or production.
 
         service_name:
-
             Name of the hosted service.
-
         deployment_slot:
             The environment to which the hosted service is deployed. Valid
             values are: staging, production
@@ -541,12 +531,9 @@ class ServiceManagementService(_ServiceManagementClient):
         Deletes the specified deployment.
 
         service_name:
-
             Name of the hosted service.
-
         deployment_name:
             The name of the deployment.
-
         '''
         _validate_not_none('service_name', service_name)
         _validate_not_none('deployment_name', deployment_name)
@@ -564,15 +551,11 @@ class ServiceManagementService(_ServiceManagementClient):
         environment, it will be swapped to staging.
 
         service_name:
-
             Name of the hosted service.
-
         production:
             The name of the production deployment.
-
         source_deployment:
             The name of the source deployment.
-
         '''
         _validate_not_none('service_name', service_name)
         _validate_not_none('production', production)
@@ -590,12 +573,9 @@ class ServiceManagementService(_ServiceManagementClient):
         Initiates a change to the deployment configuration.
 
         service_name:
-
             Name of the hosted service.
-
         deployment_name:
             The name of the deployment.
-
         configuration:
             The base-64 encoded service configuration file for the deployment.
         treat_warnings_as_error:
@@ -633,17 +613,13 @@ class ServiceManagementService(_ServiceManagementClient):
         Initiates a change in deployment status.
 
         service_name:
-
             Name of the hosted service.
-
         deployment_name:
             The name of the deployment.
-
         status:
             The change to initiate to the deployment status. Possible values
             include:
                 Running, Suspended
-
         '''
         _validate_not_none('service_name', service_name)
         _validate_not_none('deployment_name', deployment_name)
@@ -662,12 +638,9 @@ class ServiceManagementService(_ServiceManagementClient):
         Initiates an upgrade.
 
         service_name:
-
             Name of the hosted service.
-
         deployment_name:
             The name of the deployment.
-
         mode:
             If set to Manual, WalkUpgradeDomain must be called to apply the
             update. If set to Auto, the Windows Azure platform will
@@ -692,7 +665,6 @@ class ServiceManagementService(_ServiceManagementClient):
             fail.
         role_to_upgrade:
             The name of the specific role to upgrade.
-
         extended_properties:
             Dictionary containing name/value pairs of storage account
             properties. You can have a maximum of 50 extended property
@@ -728,12 +700,9 @@ class ServiceManagementService(_ServiceManagementClient):
         upgrade or configuration change.
 
         service_name:
-
             Name of the hosted service.
-
         deployment_name:
             The name of the deployment.
-
         upgrade_domain:
             An integer value that identifies the upgrade domain to walk.
             Upgrade domains are identified with a zero-based index: the first
@@ -757,7 +726,6 @@ class ServiceManagementService(_ServiceManagementClient):
         configuration change was started.
 
         service_name:
-
             Name of the hosted service.
 
         deployment_name:
@@ -791,7 +759,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Requests a reboot of a role instance that is running in a deployment.
 
         service_name:
-
             Name of the hosted service.
 
         deployment_name:
@@ -818,7 +785,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Requests a reimage of a role instance that is running in a deployment.
 
         service_name:
-
             Name of the hosted service.
 
         deployment_name:
@@ -848,7 +814,6 @@ class ServiceManagementService(_ServiceManagementClient):
         reimage_role_instance.
 
         service_name:
-
             Name of the hosted service.
 
         deployment_name:
@@ -878,7 +843,6 @@ class ServiceManagementService(_ServiceManagementClient):
         reimage_role_instance.
 
         service_name:
-
             Name of the hosted service.
 
         deployment_name:
@@ -903,7 +867,6 @@ class ServiceManagementService(_ServiceManagementClient):
         it has already been taken.
 
         service_name:
-
             Name of the hosted service.
 
         '''
@@ -921,7 +884,6 @@ class ServiceManagementService(_ServiceManagementClient):
         hosted service.
 
         service_name:
-
             Name of the hosted service.
 
         '''
@@ -937,7 +899,6 @@ class ServiceManagementService(_ServiceManagementClient):
         with a hosted service.
 
         service_name:
-
             Name of the hosted service.
 
         thumbalgorithm:
@@ -962,7 +923,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Adds a certificate to a hosted service.
 
         service_name:
-
             Name of the hosted service.
 
         data:
@@ -992,7 +952,6 @@ class ServiceManagementService(_ServiceManagementClient):
         service.
 
         service_name:
-
             Name of the hosted service.
 
         thumbalgorithm:
@@ -1032,7 +991,6 @@ class ServiceManagementService(_ServiceManagementClient):
         with your Windows Azure subscription.
 
         thumbprint:
-
             The thumbprint value of the certificate.
 
         '''
@@ -1097,7 +1055,6 @@ class ServiceManagementService(_ServiceManagementClient):
         group.
 
         affinity_group_name:
-
             The name of the affinity group.
 
         '''
@@ -1112,9 +1069,7 @@ class ServiceManagementService(_ServiceManagementClient):
         Creates a new affinity group for the specified subscription.
 
         name:
-
             A name for the affinity group that is unique to the subscription.
-
         label:
             A name for the affinity group. The name can be up to 100 characters
             in length.
@@ -1142,9 +1097,7 @@ class ServiceManagementService(_ServiceManagementClient):
         specified subscription.
 
         affinity_group_name:
-
             The name of the affinity group.
-
         label:
             A name for the affinity group. The name can be up to 100 characters
             in length.
@@ -1164,9 +1117,7 @@ class ServiceManagementService(_ServiceManagementClient):
         Deletes an affinity group in the specified subscription.
 
         affinity_group_name:
-
             The name of the affinity group.
-
         '''
         _validate_not_none('affinity_group_name', affinity_group_name)
         return self._perform_delete('/' + self.subscription_id + \
@@ -1207,7 +1158,6 @@ class ServiceManagementService(_ServiceManagementClient):
         default, an exception is raised on timeout or error status.
 
         request_id:
-
             The request ID for the request you wish to track.
 
         wait_for_status:
@@ -1262,7 +1212,6 @@ class ServiceManagementService(_ServiceManagementClient):
         whether the operation has succeeded, failed, or is still in progress.
 
         request_id:
-
             The request ID for the request you wish to track.
 
         '''
@@ -1327,7 +1276,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Deletes a reserved IP address from the specified subscription.
 
         name:
-
             Required. Name of the reserved IP address.
 
         '''
@@ -1340,7 +1288,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Retrieves information about the specified reserved IP address.
 
         name:
-
             Required. Name of the reserved IP address.
 
         '''
@@ -1360,7 +1307,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Retrieves the specified virtual machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1396,7 +1342,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Provisions a virtual machine based on the supplied configuration.
 
         service_name:
-
             Name of the hosted service.
 
         deployment_name:
@@ -1514,7 +1459,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Adds a virtual machine to an existing deployment.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1602,7 +1546,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Updates the specified virtual machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1669,7 +1612,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Deletes the specified virtual machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1695,7 +1637,6 @@ class ServiceManagementService(_ServiceManagementClient):
         customized virtual machines.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1735,7 +1676,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Starts the specified virtual machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1759,7 +1699,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Starts the specified virtual machines.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1782,7 +1721,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Restarts the specified virtual machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1808,7 +1746,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Shuts down the specified virtual machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1845,7 +1782,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Shuts down the specified virtual machines.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1881,7 +1817,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Adds a DNS server definition to an existing deployment.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1908,7 +1843,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Updates the ip address of a DNS server.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1937,7 +1871,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Deletes a DNS server from a deployment.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -1970,7 +1903,6 @@ class ServiceManagementService(_ServiceManagementClient):
         to a Virtual Machine.
 
         publisher_name:
-
             Name of the resource extension publisher.
 
         extension_name:
@@ -1991,7 +1923,6 @@ class ServiceManagementService(_ServiceManagementClient):
         associated with the specified subscription.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -2045,7 +1976,6 @@ class ServiceManagementService(_ServiceManagementClient):
         specified subscription using a specified set of virtual hard disks.
 
         vm_image:
-
             An instance of VMImage class.
 
         vm_image.name: Required. Specifies the name of the image.
@@ -2134,7 +2064,6 @@ class ServiceManagementService(_ServiceManagementClient):
         associated with the specified subscription.
 
         vm_image_name:
-
             The name of the image.
 
         delete_vhd:
@@ -2170,7 +2099,6 @@ class ServiceManagementService(_ServiceManagementClient):
         specified subscription.
 
         vm_image_name:
-
             Name of image to update.
 
         vm_image:
@@ -2249,7 +2177,6 @@ class ServiceManagementService(_ServiceManagementClient):
         subscription to the image repository.
 
         label:
-
             Specifies the friendly name of the image.
 
         media_link:
@@ -2279,7 +2206,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Updates an OS image that in your image repository.
 
         image_name:
-
             The name of the image to update.
 
         label:
@@ -2314,7 +2240,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Deletes the specified OS image from your image repository.
 
         image_name:
-
             The name of the image.
 
         delete_vhd:
@@ -2333,7 +2258,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Retrieves the specified data disk from a virtual machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -2363,7 +2287,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Adds a data disk to a virtual machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -2430,7 +2353,6 @@ class ServiceManagementService(_ServiceManagementClient):
         machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -2496,7 +2418,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Removes the specified data disk from a virtual machine.
 
         service_name:
-
             The name of the service.
 
         deployment_name:
@@ -2579,7 +2500,6 @@ class ServiceManagementService(_ServiceManagementClient):
         Updates an existing disk in your image repository.
 
         disk_name:
-
             The name of the disk to update.
 
         has_operating_system:
@@ -2621,7 +2541,6 @@ class ServiceManagementService(_ServiceManagementClient):
         repository.
 
         disk_name:
-
             The name of the disk to delete.
 
         delete_vhd:

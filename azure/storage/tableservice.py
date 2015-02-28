@@ -109,7 +109,6 @@ class TableService(_StorageClient):
         Windows Azure Storage Analytics.
 
         storage_service_properties:
-
             StorageServiceProperties object.
         '''
         _validate_not_none('storage_service_properties',
@@ -132,7 +131,6 @@ class TableService(_StorageClient):
         Returns a list of tables under the specified account.
 
         table_name:
-
             Optional.  The specific table to query.
         top:
             Optional. Maximum number of tables to return.
@@ -222,7 +220,6 @@ class TableService(_StorageClient):
         Get an entity in a table; includes the $select options.
 
         partition_key:
-
             PartitionKey of the entity.
         row_key:
             RowKey of the entity.
@@ -254,7 +251,6 @@ class TableService(_StorageClient):
         Get entities in a table; includes the $filter and $select options.
 
         table_name:
-
             Table to query.
         filter:
             Optional. Filter as described at
@@ -296,7 +292,6 @@ class TableService(_StorageClient):
         Inserts a new entity into a table.
 
         table_name:
-
             Table name.
         entity:
             Required. The entity object to insert. Could be a dict format or
@@ -327,7 +322,6 @@ class TableService(_StorageClient):
         replaces the entire entity and can be used to remove properties.
 
         table_name:
-
             Table name.
         partition_key:
             PartitionKey of the entity.
@@ -374,7 +368,6 @@ class TableService(_StorageClient):
         operation does.
 
         table_name:
-
             Table name.
         partition_key:
             PartitionKey of the entity.
@@ -419,7 +412,6 @@ class TableService(_StorageClient):
         Deletes an existing entity in a table.
 
         table_name:
-
             Table name.
         partition_key:
             PartitionKey of the entity.
@@ -460,7 +452,6 @@ class TableService(_StorageClient):
         entity, it is also known as an "upsert" operation.
 
         table_name:
-
             Table name.
         partition_key:
             PartitionKey of the entity.
@@ -500,7 +491,6 @@ class TableService(_StorageClient):
         it is also known as an "upsert" operation.
 
         table_name:
-
             Table name.
         partition_key:
             PartitionKey of the entity.

@@ -36,9 +36,7 @@ class SchedulerManagementService(_ServiceManagementClient):
         Initializes the scheduler management service.
 
         subscription_id:
-
             Subscription to manage.
-
         cert_file:
             Path to .pem certificate file (httplib), or location of the
             certificate in your Personal certificate store (winhttp) in the
