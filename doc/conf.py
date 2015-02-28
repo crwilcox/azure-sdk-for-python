@@ -15,10 +15,6 @@
 import sys
 import os
 import pip
-#pip.main(['install', 'sphinx_bootstrap_theme'])
-#import sphinx_bootstrap_theme
-pip.main(['install', 'cloud_sptheme'])
-import cloud_sptheme as csp
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -49,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'azure-sdk-for-python'
+project = u'Azure SDK for Python'
 copyright = u'2015, Microsoft'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -110,9 +106,13 @@ autoclass_content = 'both'
 #html_theme_options = {'collapsiblesidebar': True}
 
 # Activate the theme.
+#pip.main(['install', 'sphinx_bootstrap_theme'])
+#import sphinx_bootstrap_theme
 #html_theme = 'bootstrap'
 #html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
+pip.main(['install', 'cloud_sptheme'])
+import cloud_sptheme as csp
 html_theme = "cloud"
 html_theme_path = [csp.get_theme_dir()]
 
@@ -192,7 +192,7 @@ html_theme_path = [csp.get_theme_dir()]
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'azure-sdk-for-pythondoc'
+htmlhelp_basename = 'azure-sdk-for-python-doc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -212,7 +212,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'azure-sdk-for-python.tex', u'azure-sdk-for-python Documentation',
+  ('index', 'azure-sdk-for-python.tex', u'Azure SDK for Python Documentation',
    u'Microsoft', 'manual'),
 ]
 
