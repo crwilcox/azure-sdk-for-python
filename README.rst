@@ -94,7 +94,7 @@ features).
 
 Usage
 =====
-For detailed usage information please view our documentation at `azure-sdk-for-python.ReadTheDocs.org <http://azure-sdk-for-python.readthedocs.org>`
+For detailed usage information please view our documentation at `azure-sdk-for-python.ReadTheDocs.org <http://azure-sdk-for-python.readthedocs.org>`__
 
 \*\* For more examples please see the `Microsoft Azure Python Developer
 Center <http://azure.microsoft.com/en-us/develop/python/>`__ \*\*
